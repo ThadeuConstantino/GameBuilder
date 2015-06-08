@@ -1,0 +1,131 @@
+package  
+{
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	import events.MainEvent;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.filesystem.File;
+	import flash.geom.ColorTransform;
+	import flash.text.TextField;
+	import model.Global;
+	import utils.ConstructAlpha;
+	import utils.HudButtons;
+	import flash.display.MovieClip;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	import com.luaye.console.C;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopMenuAtividade extends MovieClip 
+	{
+		public var mcPopM:MovieClip;
+		
+		public function PopMenuAtividade() 
+		{
+			this.alpha = 0;
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			TweenNano.to(this, 1, { alpha:1 } );
+			
+			
+			this.mcPopM.btVoltaAtividade.buttonMode = true;
+			this.mcPopM.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.mcPopM.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			this.mcPopM.btGrupos.buttonMode = true;
+			this.mcPopM.btGrupos.addEventListener(MouseEvent.MOUSE_DOWN, handleDownIrGrupos);
+			this.mcPopM.btGrupos.addEventListener(MouseEvent.MOUSE_UP, handleUpIrGrupos);
+			
+			this.mcPopM.btSelecAtividade.buttonMode = true;
+			this.mcPopM.btSelecAtividade.addEventListener(MouseEvent.MOUSE_DOWN, handleDownSelecAtividade);
+			this.mcPopM.btSelecAtividade.addEventListener(MouseEvent.MOUSE_UP, handleUpSelecAtividade);
+			
+			this.mcPopM.btEncerrarAula.buttonMode = true;
+			this.mcPopM.btEncerrarAula.addEventListener(MouseEvent.MOUSE_DOWN, handleDownEncerraAula);
+			this.mcPopM.btEncerrarAula.addEventListener(MouseEvent.MOUSE_UP, handleUpEncerraAula);
+			
+		}
+		
+		private function clean()
+		{
+			this.mcPopM.btVoltaAtividade.buttonMode = false;
+			this.mcPopM.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.mcPopM.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			this.mcPopM.btGrupos.buttonMode = false;
+			this.mcPopM.btGrupos.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownIrGrupos);
+			this.mcPopM.btGrupos.removeEventListener(MouseEvent.MOUSE_UP, handleUpIrGrupos);
+			
+			this.mcPopM.btSelecAtividade.buttonMode = false;
+			this.mcPopM.btSelecAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownSelecAtividade);
+			this.mcPopM.btSelecAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpSelecAtividade);
+			
+			this.mcPopM.btEncerrarAula.buttonMode = false;
+			this.mcPopM.btEncerrarAula.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownEncerraAula);
+			this.mcPopM.btEncerrarAula.removeEventListener(MouseEvent.MOUSE_UP, handleUpEncerraAula);
+		}
+		
+		//Listener
+		private function handleDownVoltaAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownIrGrupos(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownSelecAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownEncerraAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		//Volta para tela de grupos
+		private function handleUpIrGrupos(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			if(Global.noLinkage)Global.noLinkage.loading.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopIniciaAtividade"));
+		}
+		//Vai para tela de QRCODE fazer uma nova selecao de video
+		private function handleUpSelecAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			Global.blQRCodeAtividade = true;
+			if(Global.noLinkage)Global.noLinkage.loading.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "QRCode", "PopIniciaAtividade"));
+		}
+		
+		private function handleUpVoltaAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			PopIniciaAtividade.instance.removePopMenu();
+			this.clean();
+		}
+		
+		private function handleUpEncerraAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			PopIniciaAtividade.instance.insertPopConfirma();
+		}
+
+	}
+
+}

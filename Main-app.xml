@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<application xmlns="http://ns.adobe.com/air/application/17.0">
+    <id>com.legozoom.alunozoom.ZOOMAluno</id>
+    <versionNumber>1.0</versionNumber>
+    <versionLabel></versionLabel>
+    <filename>Main</filename>
+    <name>Main</name>
+    <copyright></copyright>
+    <icon></icon>
+    <initialWindow>
+        <content>Main.swf</content>
+        <systemChrome>standard</systemChrome>
+        <transparent>false</transparent>
+        <visible>true</visible>
+        <fullScreen>true</fullScreen>
+        <renderMode>auto</renderMode>
+        <autoOrients>false</autoOrients>
+        <aspectRatio>landscape</aspectRatio>
+    </initialWindow>
+    <customUpdateUI>false</customUpdateUI>
+    <allowBrowserInvocation>false</allowBrowserInvocation>
+    <android>
+        <manifestAdditions><![CDATA[<manifest android:installLocation="auto">
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+	
+    <uses-permission android:name="android.permission.CAMERA" />
+   <uses-feature android:name="android.hardware.camera" />
+   <uses-feature
+       android:name="android.hardware.camera.autofocus"
+       android:required="false" />
+   <uses-feature
+       android:name="android.hardware.camera.flash"
+       android:required="false" />
+   <uses-feature android:name="android.hardware.screen.landscape" />
+   <uses-feature
+       android:name="android.hardware.touchscreen"
+       android:required="false" />
+   <supports-screens
+       android:anyDensity="true"
+       android:largeScreens="true"
+       android:normalScreens="true"
+       android:smallScreens="true"
+       android:xlargeScreens="true" />
+        
+    <application>
+    
+        <activity>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        
+            
+       <activity
+           android:name="com.google.zxing.client.android.CaptureActivity"
+           android:clearTaskOnLaunch="true"
+           android:configChanges="orientation|keyboardHidden"
+           
+           android:stateNotNeeded="true"
+           android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+           android:windowSoftInputMode="stateAlwaysHidden" >
+           <intent-filter>
+               <action android:name="air.com.legozoom.alunozoom.ZOOMAluno" />
+               <category android:name="android.intent.category.DEFAULT" />
+           </intent-filter>
+       </activity>
+       <activity
+           android:name="com.google.zxing.client.android.PreferencesActivity"
+           android:label="Settings"
+           android:stateNotNeeded="true" >
+       </activity>
+        
+        <activity
+           android:name="com.doitflash.barcode.MainActivity"
+           android:label="Barcode Scanner" >
+            <intent-filter>
+               <category android:name="android.intent.category.DEFAULT" />
+           </intent-filter>
+       </activity>
+       
+       <activity
+       		android:name="com.doitflash.pdfViewer.Cargo"
+            android:theme="@android:style/Theme.Black.NoTitleBar"/>
+
+    
+    </application>
+</manifest>]]></manifestAdditions>
+    </android>
+    <iPhone>
+        <!--https://developer.apple.com/library/ios/documentation/general/reference/infoplistkeyreference/Articles/iPhoneOSKeys.html-->
+        <!--http://help.adobe.com/en_US/air/build/WSfffb011ac560372f7e64a7f12cd2dd1867-8000.html-->
+        <InfoAdditions><![CDATA[
+  <key>MinimumOSVersion</key>
+  <string>6.1</string>
+  <key>UIStatusBarStyle</key>
+  <string>UIStatusBarStyleBlackOpaque</string>
+  <key>UIRequiresPersistentWiFi</key>
+  <string>NO</string>
+  <key>UIPrerenderedIcon</key>
+  <true/>
+  <key>UIDeviceFamily</key>
+  <array><string>1</string><string>2</string></array>
+]]></InfoAdditions>
+        <requestedDisplayResolution>high</requestedDisplayResolution>
+    </iPhone>
+    <supportedLanguages>en pt</supportedLanguages>
+    <extensions>
+        <extensionID>com.freshplanet.AirNetworkInfo</extensionID>
+        <extensionID>com.doitflash.air.extensions.barcode</extensionID>
+    </extensions>
+</application>

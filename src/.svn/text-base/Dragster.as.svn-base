@@ -1,0 +1,504 @@
+package  
+{
+	import com.greensock.TweenMax;
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	import flash.system.Capabilities;
+	import flash.desktop.NativeApplication;
+	import flash.display.MovieClip;
+	import flash.display.Screen;
+	import flash.display.SimpleButton;
+	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageDisplayState;
+	import flash.display.StageScaleMode;
+	import flash.errors.IOError;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.MouseEvent;
+	import flash.events.NetStatusEvent;
+	import flash.events.ProgressEvent;
+	import flash.filesystem.File;
+	import flash.filesystem.FileMode;
+	import flash.filesystem.FileStream;
+	import flash.geom.ColorTransform;
+	import flash.geom.Rectangle;
+	import flash.media.Video;
+	import flash.net.FileReference;
+	import flash.net.NetConnection;
+	import flash.net.NetStream;
+	import flash.net.NetworkInfo;
+	import flash.net.NetworkInterface;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.text.TextField;
+	import flash.utils.ByteArray;
+	
+	import events.MainEvent;
+	
+	import fl.video.CuePointType;
+	import fl.video.FLVPlayback;
+	import fl.video.VideoEvent;
+	import fl.video.VideoPlayer;
+	
+	import model.Global;
+	
+	import utils.HudButtons;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class Dragster extends Sprite 
+	{
+		private var agora:Number;
+		private var destino:Number;
+		private var time:Number;
+		private var passo:int;
+		private var passototal:int;
+		private var drag:Boolean;
+		private var headtime:int;
+		
+		public var passoContador:TextField;
+		//public var txtAtividade:TextField;
+		public var vidPlayer:FLVPlayback;
+		//public var btAvancar:HudButtons;
+		//public var btVoltar:HudButtons;
+		//public var btRepetir:SimpleButton;
+		//public var head:MovieClip;
+		
+		//public var btMenu:HudButtons;
+		public var popMenu:mcPopMenuAnima;
+		
+		private var auxDragPosX:Number = 0;
+		private var auxDropPosX:Number = 0;
+		
+		private var blClickAvancar:Boolean = true;
+		private var blPrimeiroClick:Boolean = false;
+		private var blUltimoFrame:Boolean = false;
+		private var btHandleUpSliderAvanca:Boolean = false;
+		private var btHandleUpSliderVolta:Boolean = false;
+		//private var base:MovieClip;
+		
+		var video:Video = new Video();
+		var nc:NetConnection = new NetConnection();
+		var ns:NetStream;
+		//var listenerObject:Object;
+		
+		private var blPause:Boolean = false;
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function Dragster()
+		{						
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+
+			//C.startOnStage(this, "`");
+			//C.commandLine = false;
+			//C.commandLineAllowed = false;
+			//C.x = 0;
+			//C.width = 600;
+			//C.height = 150;
+			//C.strongRef = true;
+			//C.visible = true;
+		}
+		
+		function startVideo(){
+			//Add the video to the stage
+			addChild(video);
+			video.width = 1280
+			video.height = 720
+			video.x = 0;
+			video.y = 0;
+			//connect the netStream/netConnection with the video
+			nc.connect(null);
+			ns = new NetStream(nc);
+			ns.client = {onMetaData:ns_onMetaData, NetStatusEvent:ns_onPlayStatus};
+			video.attachNetStream(ns);
+			ns.play("Rover.flv");
+			//
+			//Start with video being smoothed
+			video.smoothing = true;
+		}
+		function ns_onMetaData(_data:Object){
+			//put stuff here if you want.
+		}
+		//
+		function ns_onPlayStatus(e:NetStatusEvent){
+			//put other stuff here if you want.
+		}
+		
+		public function init(e:Event)
+		{
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			this.base.btVoltar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltar);
+			this.base.btVoltar.addEventListener(MouseEvent.MOUSE_UP, handleVoltar);
+			this.base.btRepetir.addEventListener(MouseEvent.CLICK, handleRepetir);
+			this.base.btAvancar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownAvancar);
+			this.base.btAvancar.addEventListener(MouseEvent.MOUSE_UP, handleAvancar);
+			
+			this.dragger.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+			this.dragger.addEventListener(MouseEvent.MOUSE_UP, mouseUpHandler);
+			//C.log(Global.strQRCode+".flv");
+			this.vidPlayer.source = File.applicationStorageDirectory.resolvePath(Global.strQRCode + Global.strWHVideo + ".flv").url; //"dragster.flv";
+			//this.vidPlayer.source = "robo.flv" //"dragster.flv";
+			this.vidPlayer.getVideoPlayer(this.vidPlayer.activeVideoPlayerIndex).smoothing = true; 
+			
+			//this.startVideo();	
+
+			//C.log(File.applicationStorageDirectory.resolvePath(Global.strQRCode + Global.strWHVideo + ".flv").exists);
+			//C.log(Global.strQRCode + Global.strWHVideo + ".flv");
+			
+			this.drag = false;
+			if (File.applicationStorageDirectory.resolvePath(Global.strQRCode + Global.strWHVideo + ".flv").exists && Global.frameAtualVideo > 1) {
+			//if ("robo.flv" && Global.frameAtualVideo > 1) {
+				this.vidPlayer.playheadTime = Global.frameAtualVideo - 1;
+				this.destino = Global.frameAtualVideo;
+				this.blClickAvancar = false;
+				this.passo = Global.frameAtualVideo;
+				this.vidPlayer.play();
+				//passoContador.text = Global.frameAtualVideo.toString();
+				this.base.head.mc.head_field.text = Global.frameAtualVideo.toString();
+			}else {
+				this.destino = 1;
+				this.agora = 1.04;
+				this.passo = 1;
+				//this.vidPlayer.play();
+			}
+			
+			//Nome atividade
+			if(Global.noLinkage)this.base.txtAtividade.text = Global.arrNomesVideos[Global.arrVideos.indexOf(Global.strQRCode)];
+			
+			//BtMenu
+			this.base.btMenu.buttonMode = true;
+			this.base.btMenu.addEventListener(MouseEvent.MOUSE_DOWN, handleDownBtMenu);
+			this.base.btMenu.addEventListener(MouseEvent.MOUSE_UP, handleUpBtMenu);
+			
+			this.base.addEventListener(Event.ENTER_FRAME, enterFrame);
+		}			
+		
+		private function calculoResponsivo():void 
+		{			
+			guiSize = new Rectangle(0, 0, 1024, 600);
+			deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			C.log(Math.max(stage.fullScreenWidth, stage.fullScreenHeight));
+			C.log(Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+			C.log(appScale);
+			
+			C.log(appSize.width);
+			C.log(appLeftOffset);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+
+			// menus are centered horizontally
+			if(Capabilities.os.indexOf("iPhone") != -1)
+			{
+				this.vidPlayer.x = appLeftOffset;
+			}else{
+				this.vidPlayer.x = appLeftOffset - 5;
+			}
+			
+			this.vidPlayer.width = appSize.width;
+			this.vidPlayer.height = appSize.height;
+			//this.vidPlayer.x = 0
+			base.btMenu.x += appLeftOffset;
+			
+			base.btVoltar.y += (appSize.height - guiSize.height)
+			base.btAvancar.y += (appSize.height - guiSize.height)
+			base.head.y += (appSize.height - guiSize.height)
+			base.mcPino.y += (appSize.height - guiSize.height)
+			base.mcBgBar.y += (appSize.height - guiSize.height)
+			base.btRepetir.y += (appSize.height - guiSize.height)
+			base.bar.y += (appSize.height - guiSize.height)
+				
+			//this.mascaraD.height = appSize.height;
+			
+		}
+
+		private function handleDownBtMenu(e:MouseEvent):void 
+		{
+			InsertColorTrans(e.currentTarget as MovieClip);
+		}
+		
+		private function handleUpBtMenu(e:MouseEvent):void 
+		{
+			RemoveColorTrans(e.currentTarget as MovieClip);
+			this.popMenu = new mcPopMenuAnima();
+			//this.popMenu.scaleX = this.popMenu.scaleY = this.appScale;
+			//this.popMenu.x = appLeftOffset;
+			//this.popMenu.x -= ((this.popMenu.width/2 * this.appScale) - this.popMenu.width/2);
+			//this.popMenu.y -= ((this.popMenu.height/2 * this.appScale) - this.popMenu.height/2);
+			this.addChild(this.popMenu);
+			this.popMenu.alpha = 0;
+			this.popMenu.x += appLeftOffset;
+			this.popMenu.y += (appSize.height - guiSize.height)/2
+			TweenNano.to(this.popMenu, 1, { alpha:1 } );
+			
+			this.popMenu.btVoltaMontagem.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaMontagem);
+			this.popMenu.btVoltaMontagem.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaMontagem);
+			this.popMenu.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+		}
+		
+		private function handleDownVoltaMontagem(e:MouseEvent):void 
+		{
+			InsertColorTrans(e.currentTarget as MovieClip);
+		}
+	
+		private function handleUpVoltaMontagem(e:MouseEvent):void 
+		{
+			RemoveColorTrans(e.currentTarget as MovieClip);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaMontagem);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaMontagem);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			TweenNano.to(this.popMenu, 1, { alpha:0, onComplete:tweenClosePopMenu } );
+		}
+		private function tweenClosePopMenu():void 
+		{
+			this.removeChild(this.popMenu);
+			this.popMenu = null;
+		}
+		
+		private function handleDownVoltaAtividade(e:MouseEvent):void 
+		{
+			InsertColorTrans(e.currentTarget as MovieClip);
+		}
+		
+		private function handleUpVoltaAtividade(e:MouseEvent):void 
+		{
+			RemoveColorTrans(e.currentTarget as MovieClip);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaMontagem);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaMontagem);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopIniciaAtividade", "dragsterMob"));
+		}
+			
+		//ENTER FRAME ***************************************************************
+		private function enterFrame(event:Event)
+		{
+			this.blPause = false;
+			passototal = ( Math.round(this.vidPlayer.totalTime) / 2) + 1;
+			//trace(this.vidPlayer.totalTime + "   ----     " + this.passototal);
+			//Global.frameAtualVideo = Number(this.base.head.mc.head_field.text);
+			if (this.vidPlayer.playheadTime >= destino)
+			{
+				this.blPause = true;
+				this.vidPlayer.pause();
+				this.base.btVoltar.alpha = 1;
+				this.base.btVoltar.mouseEnabled = true;
+				this.base.btVoltar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltar);
+				this.base.btVoltar.addEventListener(MouseEvent.MOUSE_UP, handleVoltar);
+				
+				agora = destino;
+				
+				if(!blUltimoFrame){
+					this.base.btAvancar.alpha = 1;
+					this.base.btAvancar.mouseEnabled = true;
+					
+					this.base.btAvancar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownAvancar);
+					this.base.btAvancar.addEventListener(MouseEvent.MOUSE_UP, handleAvancar);
+				}
+			}
+			
+			if (passo == 1)
+			{
+				this.base.btAvancar.mouseEnabled = true;
+				
+				this.base.btVoltar.mouseEnabled = false;
+				this.base.btVoltar.alpha = .3;
+				this.base.btVoltar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltar);
+				this.base.btVoltar.removeEventListener(MouseEvent.MOUSE_UP, handleVoltar);
+			}else if (passo == passototal)
+			{
+				
+				this.base.btVoltar.mouseEnabled = true;
+				
+				if (!blUltimoFrame) {
+					
+					this.base.btAvancar.mouseEnabled = false;
+					this.base.btAvancar.alpha .3;
+				}
+			}
+				
+			if (drag == true)
+			{
+				this.auxDragPosX = ((this.base.bar.scaleX * 810) + 107);
+				if (this.dragger.x >= 107 && this.dragger.x <= 922)
+				{
+					this.base.head.x = this.dragger.x;
+				}
+				headtime = ((this.base.head.x-107) * passototal / 810)+1;
+				this.base.head.mc.head_field.text = headtime.toString();
+			}
+			else
+			{
+				this.auxDropPosX = ((this.base.bar.scaleX * 810) + 107);
+				
+				if (this.auxDragPosX != this.auxDropPosX) {
+					this.base.head.x = (this.vidPlayer.playheadPercentage / 100 * 810) + 107;
+					this.base.mcPino.x = this.base.head.x;
+					this.dragger.x = this.base.head.x;
+					this.dragger.y = this.base.head.y;
+				}
+				
+				if (this.blPause && blUltimoFrame && passo == passototal) {
+					this.base.bar.scaleX = .5;
+					this.base.mcPino.scaleX = .8;
+					this.base.mcPino.x = this.base.head.x = 917;
+				}else {
+					this.base.bar.scaleX = this.vidPlayer.playheadPercentage / 200;
+				}
+				
+				
+			}
+		}
+		
+		//LISTENER *********************************************************
+		private function mouseDownHandler(evt:MouseEvent):void
+		{
+			this.dragger.startDrag();
+			drag = true;
+			this.base.head.gotoAndPlay(2);
+		}
+
+		private function handleRepetir(e:Event):void
+		{
+			if (!this.blClickAvancar) {
+				this.blClickAvancar = true;
+				this.vidPlayer.playheadTime = agora - 1;
+				this.vidPlayer.play();
+				agora = agora - 2;
+				if (passo > 1) passo--;
+				destino = agora;
+			}
+		}
+
+		private function mouseUpHandler(evt:MouseEvent):void
+		{
+			blUltimoFrame = false;
+			blPrimeiroClick = true;
+			drag = false;
+			this.dragger.stopDrag();
+			this.blClickAvancar = true;
+			this.base.head.gotoAndPlay(10);
+			agora = (headtime * 2)-2;
+			passo = headtime;
+			//passoContador.text = passo.toString();
+			this.vidPlayer.playheadTime = agora;
+			agora = agora - 1;
+			//this.vidPlayer.play();
+			destino = agora;
+			
+			this.dragger.x = this.base.head.x;
+			this.dragger.y = this.base.head.y;
+
+		}
+		
+		private function handleDownVoltar(e:MouseEvent):void 
+		{
+			InsertColorTrans(e.currentTarget as MovieClip);
+		}
+		
+		private function handleDownAvancar(e:MouseEvent):void 
+		{
+			InsertColorTrans(e.currentTarget as MovieClip);
+		}
+		
+		private function handleVoltar(e:Event):void
+		{
+			RemoveColorTrans(e.currentTarget as MovieClip);
+			
+			blUltimoFrame = false;
+			if (this.blClickAvancar) {
+				this.vidPlayer.playheadTime = agora - 1;
+				agora = agora - 2;
+				passo--;
+			}else {
+				this.blClickAvancar = true;
+				this.vidPlayer.playheadTime = agora - 1;
+				agora = agora - 2;
+				this.vidPlayer.play();
+			}
+			
+			destino = agora;
+			//passoContador.text = passo.toString();
+			this.base.head.mc.head_field.text = passo.toString();
+			
+		}
+		
+    	private function handleAvancar(e:Event):void
+		{
+			RemoveColorTrans(e.currentTarget as MovieClip);
+			//trace(this.vidPlayer.playheadTime + "   ---    " + this.blClickAvancar)
+			if (passo == passototal) {
+				blUltimoFrame = true;
+			}
+			if (this.vidPlayer.playheadTime == 0 && !blPrimeiroClick) {
+				this.vidPlayer.play();
+			}else if (!this.blClickAvancar) {
+				this.vidPlayer.playheadTime = agora + 1;
+				
+				destino = agora;
+				passo++;
+				
+			}else {
+				this.vidPlayer.playheadTime = agora + 1;
+				//this.vidPlayer.seek(this.vidPlayer.findCuePoint("ASCuePt1", CuePointType.ACTIONSCRIPT)["time"]);
+				this.vidPlayer.play();
+				agora = agora + 2;
+				destino = agora;
+				
+			}
+			this.blPrimeiroClick = true;
+			this.blClickAvancar = !this.blClickAvancar;
+			this.base.btAvancar.alpha = .3;
+			//passoContador.text = passo.toString();
+			this.base.head.mc.head_field.text = passo.toString();
+			this.base.btVoltar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltar);
+			this.base.btVoltar.removeEventListener(MouseEvent.MOUSE_UP, handleVoltar);
+			this.base.btRepetir.removeEventListener(MouseEvent.CLICK, handleRepetir);
+			this.base.btAvancar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownAvancar);
+			this.base.btAvancar.removeEventListener(MouseEvent.MOUSE_UP, handleAvancar);
+		}
+		
+	}
+
+}

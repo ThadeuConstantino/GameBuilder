@@ -1,0 +1,177 @@
+package {
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	/**
+	 * ..
+	 * @author ..
+	 */
+	public class PopLogin extends MovieClip 
+	{
+
+		private var popFeed:mcPopFeed;
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function PopLogin() 
+		{
+			this.addEventListener(Event.ADDED_TO_STAGE, init);	
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			this.txtSenha.displayAsPassword = true;
+			
+			this.txtIdEscola.addEventListener(FocusEvent.FOCUS_IN, focusInEscolaHandler);
+			this.txtSenha.addEventListener(FocusEvent.FOCUS_IN, focusInSenhaHandler);
+			
+			this.btIniciar.buttonMode = true;
+			this.btIniciar.addEventListener(MouseEvent.MOUSE_DOWN, handledownBtInit);
+			this.btIniciar.addEventListener(MouseEvent.MOUSE_UP, handleUpBtInit);
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			guiSize = new Rectangle(0, 0, 1024, 600);
+			deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			//C.log("appTopOffset -1  " + (appSize.height));
+			//C.log("appTopOffset 0  " + (guiSize.height));
+			C.log("appTopOffset 1  " + (appSize.height - guiSize.height)/2);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+			this.x += appLeftOffset;
+			
+			//if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+			this.y += (appSize.height - guiSize.height)/2
+			//}
+
+		}
+		
+		private function focusInEscolaHandler(e:FocusEvent):void 
+		{
+			this.txtIdEscola.text = "";
+		}
+		
+		private function focusInSenhaHandler(e:FocusEvent):void 
+		{
+			this.txtSenha.text = "";
+		}
+		
+		
+		private function clean():void
+		{
+			this.visible = false;
+			this.popFeed.btContinuar.buttonMode = false;
+			this.popFeed.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownFechaPop);
+			this.popFeed.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpFechaPop);
+			
+			this.btIniciar.buttonMode = false;
+			this.btIniciar.removeEventListener(MouseEvent.MOUSE_DOWN, handledownBtInit);
+			this.btIniciar.removeEventListener(MouseEvent.MOUSE_UP, handleUpBtInit);
+		}
+		
+		//Listeners
+		private function handledownBtInit(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpBtInit(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popFeed = new mcPopFeed();
+			this.addChild(this.popFeed);
+			//this.popFeed.x += appLeftOffset;
+			//this.popFeed.y += (appSize.height - guiSize.height)/2
+			
+			
+			if (this.txtIdEscola.text == Global.idEscola && this.txtSenha.text == Global.senhaEscola) {
+				this.popFeed.gotoAndStop(1);
+				this.popFeed.txtNome.text = Global.nomeEscola;
+			}else {
+				this.popFeed.gotoAndStop(2);
+			}
+			
+			this.popFeed.btContinuar.buttonMode = true;
+			this.popFeed.btContinuar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownFechaPop);
+			this.popFeed.btContinuar.addEventListener(MouseEvent.MOUSE_UP, handleUpFechaPop);
+		}
+		
+		private function handleDownFechaPop(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpFechaPop(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			if (this.txtIdEscola.text == Global.idEscola && this.txtSenha.text == Global.senhaEscola) {
+				this.clean();
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConteudo", "PopLogin"));
+			}else {
+				this.popFeed.btContinuar.buttonMode = false;
+				this.popFeed.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownFechaPop);
+				this.popFeed.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpFechaPop);
+				TweenNano.to(this.popFeed, 1, {alpha:0, onComplete:tweenClosePopFeed});
+			}
+			
+		}
+		
+		private function tweenClosePopFeed():void 
+		{			
+			this.removeChild(this.popFeed);
+			this.popFeed = null;
+		}
+		
+	}
+
+}

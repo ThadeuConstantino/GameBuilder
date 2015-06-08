@@ -1,0 +1,165 @@
+package  
+{
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.MouseEvent;
+	import flash.events.ProgressEvent;
+	import flash.filesystem.File;
+	import flash.filesystem.FileMode;
+	import flash.filesystem.FileStream;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLRequest;
+	import flash.utils.ByteArray;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.ConstructAlpha;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopDownload extends ConstructAlpha 
+	{
+		public var mcCVideo:MovieClip;
+		
+		private var contVideos:int = 0;
+		
+		private var fileStream:FileStream;
+		private var loader:URLLoader
+		
+		public function PopDownload() 
+		{
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			this.contVideos = 0;
+			this.mcCVideo.btCancelar.buttonMode = true;
+			this.mcCVideo.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancela);
+			this.mcCVideo.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancela);
+			
+			this.recursaoLoadVideo();
+		}
+		
+		private function recursaoLoadVideo():void 
+		{			
+			if (!File.applicationStorageDirectory.resolvePath(Global.arrVideos[this.contVideos]+Global.strWHVideo+".flv").exists)
+			{
+				this.mcCVideo.txtMsg.text = "Aguarde... fazendo download de " + (Global.arrVideos.length-contVideos) + " novo(s) conteúdo(s)?";
+			
+				this.download();
+			}else {
+				this.loadRegraRecursao();
+			}
+		}
+		
+		//VIDEO CONTROLLER ********************************************************
+		public function download():void {
+			//this.loading = new mcLoader();
+			//this.addChild(this.loading);
+			
+			loader = new URLLoader();
+			loader.dataFormat = URLLoaderDataFormat.BINARY;
+			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
+				C.log('error IO LOADER ' + ("http://thadeuconstantino.com/" + Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv"));
+				//loader.load(new URLRequest("http://thadeuconstantino.com/" + Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv"));
+			});
+			loader.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+			loader.addEventListener(Event.COMPLETE, downloadComplete);
+			C.log(this.contVideos);
+			C.log(Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv");
+			loader.load(new URLRequest("http://thadeuconstantino.com/" + Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv"));          
+		}
+		
+		private function progressHandler(e:ProgressEvent):void 
+		{
+			//var valor:int =  (loader.bytesTotal);
+			//C.log("Loading");
+		}
+		
+		private function downloadComplete(event:Event):void {
+			try {
+				//C.log(Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv");
+				var file:File = File.applicationStorageDirectory.resolvePath(Global.arrVideos[this.contVideos] + Global.strWHVideo + ".flv");
+				var ba:ByteArray  = event.target.data as ByteArray;
+				fileStream = new FileStream();
+				fileStream.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
+					C.log('error IO FILESTREAM');
+				});
+				fileStream.open(file, FileMode.WRITE);  
+				fileStream.writeBytes(ba);  
+				fileStream.addEventListener(Event.CLOSE, fileClosed);  
+				fileStream.close(); 
+				C.log("File downloaded succesfully");
+				
+				//Regra Carregamento dos Videos
+				this.loadRegraRecursao();
+			}
+			catch(eeee){
+				C.log("error");
+			}
+		}
+		
+		private function clean():void 
+		{
+			//this.fileStream.close();
+			this.loader.close();
+		}
+		
+		private function loadRegraRecursao():void 
+		{
+			this.contVideos += 1;
+			if (this.contVideos == Global.arrVideos.length) {
+				
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopConteudo"));
+				
+			}else {
+				this.recursaoLoadVideo();
+			}
+		}
+		
+		private function fileClosed(e:Event):void 
+		{
+			C.log("close File");
+		}
+		
+		private function handleDownCancela(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpCancela(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.mcCVideo.btCancelar.buttonMode = false;
+			this.mcCVideo.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancela);
+			this.mcCVideo.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancela);
+			
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopConteudo"));
+			
+			this.clean();
+		}
+		
+		private function tweenClosePop():void 
+		{
+			PopVerificaConteudo.instance.removeChild(PopVerificaConteudo.instance.popDownload);
+			PopVerificaConteudo.instance.popDownload = null;
+		}
+
+	}
+
+}

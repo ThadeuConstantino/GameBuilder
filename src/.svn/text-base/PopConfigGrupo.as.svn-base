@@ -1,0 +1,418 @@
+﻿package  
+{
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.HudButtonsCG;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopConfigGrupo extends MovieClip 
+	{				
+		
+		public var popMenu:mcPopMenu;
+		public var popExcuirPerfil:mcPopExcluirPerfil;
+		public var popLogofEscola:mcPopLogofEscola;
+		
+		//pattern Singleton
+		private static var _instance:PopConfigGrupo;
+		public static function get instance():PopConfigGrupo { return _instance };
+		//
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function PopConfigGrupo() 
+		{
+			_instance = this;
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			//this.btVolta.buttonMode = true;
+			this.btVolta.addEventListener(MouseEvent.MOUSE_DOWN, handeDownVolta);
+			this.btVolta.addEventListener(MouseEvent.MOUSE_UP, handeUpVolta);
+			//this.btAvanca.enabledBt(true);
+			this.btAvanca.addEventListener(MouseEvent.MOUSE_DOWN, handeDownAvanca);
+			this.btAvanca.addEventListener(MouseEvent.MOUSE_UP, handeUpAvanca);
+			//this.btMenu.enabledBt(true);
+			this.btMenu.addEventListener(MouseEvent.MOUSE_DOWN, handeDownMenu);
+			this.btMenu.addEventListener(MouseEvent.MOUSE_UP, handeUpMenu);
+			
+			this.preencheDadosParticipantes();
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			C.log("00000000000");
+		 	guiSize = new Rectangle(0, 0, 1024, 600);
+		 	deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			C.log("11111111111111");
+			
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			
+			
+			this.x = 0;
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			
+			C.log("*******************");
+			C.log(appScale);
+			C.log(this.scaleX);
+				
+			// menus are centered horizontally
+			this.btAvanca.x += appLeftOffset;
+			this.btMenu.x += appLeftOffset;
+			this.staticTitulo.x += appLeftOffset;
+			
+			this.btVolta.y += (appSize.height - guiSize.height)/2
+			this.btAvanca.y += (appSize.height - guiSize.height)/2
+			this.staticTitulo.y += (appSize.height - guiSize.height)/2
+			this.area1.y += (appSize.height - guiSize.height)/2
+			this.area2.y += (appSize.height - guiSize.height)/2
+			this.area3.y += (appSize.height - guiSize.height)/2
+			this.area4.y += (appSize.height - guiSize.height)/2
+			this.area5.y += (appSize.height - guiSize.height)/2
+			this.area6.y += (appSize.height - guiSize.height)/2
+				
+			//this.mascaraCG.height = appSize.height;
+		}
+		
+		private function preencheDadosParticipantes():void 
+		{
+			var cont:int = 0;
+			var proximo:int = 0;
+			for (var i:int = 1; this.getChildByName("area" + i); i++) {
+				var area:HudButtonsCG = this.getChildByName("area" + i) as HudButtonsCG;
+				area.idNum = i - 1;
+				//C.log("IdNum 111 " + area.idNum);
+				i == 1 ? area.txtTipo.text = "Professor" : area.txtTipo.text = ("Aluno " + (i - 1));
+				i == 1 ? area.iconNLog.txtTipo.text = "Professor" : area.iconNLog.txtTipo.text = ("Aluno " + (i - 1));
+				area.x += appLeftOffset;
+				area.buttonMode = true;
+				area.addEventListener(MouseEvent.MOUSE_DOWN, handleDownParticipante);
+				area.addEventListener(MouseEvent.MOUSE_UP, handleUpParticipante);
+				//C.log("IdNum 222");
+				if (Global.arrNomeParticiantes[i - 1] != "") {
+					cont += 1;
+					area.txtNome.text = Global.arrNomeParticiantes[i - 1];
+					area.iconNLog.visible = false;
+					area.mcAvatar.visible = true;				
+				}else {
+					//C.log("IICON N LOGG");
+					//C.log("ICON N LOG1 " + area.txtNome);
+					
+					area.txtNome.text = "";
+					area.iconNLog.visible = true;
+					area.mcAvatar.visible = false;	
+					if (proximo > 0) area.visible = false;
+					//C.log("ICON N LOG4");
+					proximo = 1;
+				}
+				
+				//C.log("AEEEE 111  " + Global.arrNomeParticiantes[0] + "  --  "+ i);
+				if (Global.arrNomeParticiantes[0] == "" && i != 1)
+				{
+					area.visible = false;
+					area.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownParticipante);
+					area.removeEventListener(MouseEvent.MOUSE_UP, handleUpParticipante);
+				}
+			}
+			
+			cont > Global.numMinAlunos ? this.btAvanca.visible = true : this.btAvanca.visible = false;
+		}
+		
+		private function handleDownParticipante(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+			Global.blQRCodeAtividade = false;
+		}
+		
+		private function analisaStatusArrParticipantes():int
+		{
+			var contP:int = 1;
+			for (var i:int = 1; i <= Global.arrNomeParticiantes.length; i++) {
+				if (Global.arrNomeParticiantes[i] == "") {
+					return contP;
+				}else {
+					contP++;
+				}
+			}
+			return 1;
+		}
+		
+		private function handleUpParticipante(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			Global.idSelectParticipante = e.currentTarget.idNum;
+			if (Global.arrNomeParticiantes[e.currentTarget.idNum] == "") {
+				this.clean();
+				//Codigo QRCode Validacao Professor e Aluno
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "QRCode", "PopConfigGrupo"));
+			}else {
+				this.insertPopExcluiPefil(e.currentTarget as HudButtonsCG);
+			}
+		}
+		
+		//POP EXCLUIR PERFIL
+		private function insertPopExcluiPefil(mcPersona:HudButtonsCG):void 
+		{
+			this.popExcuirPerfil = new mcPopExcluirPerfil();
+			this.addChild(this.popExcuirPerfil);
+			this.popExcuirPerfil.x += appLeftOffset;
+			this.popExcuirPerfil.y += (appSize.height - guiSize.height)/2
+			this.popExcuirPerfil.alpha = 0;
+			TweenNano.to(this.popExcuirPerfil, 1, { alpha:1 } );
+			this.popExcuirPerfil.mcPopExcluir.txtTipo.text = mcPersona.txtTipo.text;
+			this.popExcuirPerfil.mcPopExcluir.txtNome.text = mcPersona.txtNome.text;
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.buttonMode = true;
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.addEventListener(MouseEvent.MOUSE_DOWN, handleDownExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.addEventListener(MouseEvent.MOUSE_UP, handleUpExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.buttonMode = true;
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltarExcluirPerfil);
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltarExcluirPerfil);
+		}
+		
+		private function handleDownVoltarExcluirPerfil(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpVoltarExcluirPerfil(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.buttonMode = false;
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.removeEventListener(MouseEvent.MOUSE_UP, handleUpExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.buttonMode = false;
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.removeEventListener(MouseEvent.MOUSE_UP, handleUpExcluirPefil);
+			TweenNano.to(this.popExcuirPerfil, 1, {alpha:0, onComplete:tweenClosePopExcluir});
+		}
+		
+		private function handleDownExcluirPefil(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpExcluirPefil(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.buttonMode = false;
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btVoltar.removeEventListener(MouseEvent.MOUSE_UP, handleUpExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.buttonMode = false;
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownExcluirPefil);
+			this.popExcuirPerfil.mcPopExcluir.btExcluirPerfil.removeEventListener(MouseEvent.MOUSE_UP, handleUpExcluirPefil);
+			Global.arrNomeParticiantes[Global.idSelectParticipante] = "";
+			this.preencheDadosParticipantes();
+			TweenNano.to(this.popExcuirPerfil, 1, {alpha:0, onComplete:tweenClosePopExcluir});
+		}
+		private function tweenClosePopExcluir():void 
+		{
+			this.removeChild(this.popExcuirPerfil);
+			this.popExcuirPerfil = null;
+		}
+		
+		//POP LOGOFF ESCOLA
+		public function insertPopLogoffEscola():void 
+		{
+			removePopMenu();
+			
+			this.popLogofEscola = new mcPopLogofEscola();
+			this.addChild(this.popLogofEscola);
+			this.popLogofEscola.x += appLeftOffset;
+			this.popLogofEscola.y += (appSize.height - guiSize.height)/2
+			this.popLogofEscola.alpha = 0;
+			this.popLogofEscola.popLogof.txtSenha.displayAsPassword = true;
+			TweenNano.to(this.popLogofEscola, 1, { alpha:1 } );
+			this.popLogofEscola.popLogof.btContinuar.buttonMode = true;
+			this.popLogofEscola.popLogof.btContinuar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popLogofEscola.popLogof.btContinuar.addEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popLogofEscola.popLogof.btCancelar.buttonMode = true;
+			this.popLogofEscola.popLogof.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popLogofEscola.popLogof.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+		}
+		
+		private function handleDownContinuar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpContinuar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popLogofEscola.popLogof.btContinuar.buttonMode = false;
+			this.popLogofEscola.popLogof.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popLogofEscola.popLogof.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popLogofEscola.popLogof.btCancelar.buttonMode = false;
+			this.popLogofEscola.popLogof.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popLogofEscola.popLogof.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+
+			if (this.popLogofEscola.popLogof.txtSenha.text == Global.senhaEscola) {
+				this.popLogofEscola.popLogof.txtSenha.text = "Senha Correta!";
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopLogin", "PopConfigGrupo"));
+			}else {
+				this.popLogofEscola.popLogof.txtSenha.text = "Senha Inválida!";
+			}
+		}
+		private function handleDownCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popLogofEscola.popLogof.btContinuar.buttonMode = false;
+			this.popLogofEscola.popLogof.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popLogofEscola.popLogof.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popLogofEscola.popLogof.btCancelar.buttonMode = false;
+			this.popLogofEscola.popLogof.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popLogofEscola.popLogof.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+			TweenNano.to(this.popLogofEscola, 1, { alpha:0, onComplete:tweenClosePopLogoff } );
+		}
+		private function tweenClosePopLogoff():void 
+		{
+			this.removeChild(this.popLogofEscola);
+			this.popLogofEscola = null;
+		}
+		
+		
+		private function clean():void 
+		{
+			this.btAvanca.buttonMode = false;
+			this.btAvanca.removeEventListener(MouseEvent.MOUSE_DOWN, handeDownAvanca);
+			this.btAvanca.removeEventListener(MouseEvent.MOUSE_UP, handeUpAvanca);
+			this.btMenu.buttonMode = false;
+			this.btMenu.removeEventListener(MouseEvent.MOUSE_DOWN, handeDownMenu);
+			this.btMenu.removeEventListener(MouseEvent.MOUSE_UP, handeUpMenu);
+			
+			
+			for (var i:int = 1; this.getChildByName("area" + i); i++) {
+				var area:HudButtonsCG = this.getChildByName("area" + i) as HudButtonsCG;
+				
+				area.buttonMode = false;
+				area.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownParticipante);
+				area.removeEventListener(MouseEvent.MOUSE_UP, handleUpParticipante);
+			}
+		}
+		
+		public function removePopMenu()
+		{
+			TweenNano.to(this.popMenu, 1, { alpha:0, onComplete:tweenClosePopMenu } );
+		}
+		
+		public function logoffMembros():void 
+		{
+			this.removePopMenu();
+			for (var i:int = 1; this.getChildByName("area" + i); i++) {
+				var area:HudButtonsCG = this.getChildByName("area" + i) as HudButtonsCG;
+				area.txtTipo.text = "";
+				area.txtNome.text = "";
+				area.iconNLog.visible = true;
+				area.mcAvatar.visible = false;	
+				if(i != 1)area.visible = false;
+			}
+		}
+		
+		private function tweenClosePopMenu():void 
+		{
+			this.removeChild(this.popMenu);
+			this.popMenu = null;
+		}
+		
+		//Listener's
+		private function handeDownVolta(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownAvanca(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeUpAvanca(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean(); 
+			Global.blQRCodeAtividade = true;
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "QRCode", "PopConfigGrupo"));
+		}
+		
+		private function handeUpVolta(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConteudo", "PopConfigGrupo"));
+		}
+		
+		private function handeUpMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.popMenu = new mcPopMenu();
+			this.addChild(this.popMenu);
+			this.popMenu.alpha = 0;
+			this.popMenu.x += appLeftOffset;
+			this.popMenu.y += (appSize.height - guiSize.height)/2
+			
+			TweenNano.to(this.popMenu, 1, { alpha:1 } );
+		}
+		
+	}
+
+}

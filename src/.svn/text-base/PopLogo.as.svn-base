@@ -1,0 +1,90 @@
+package  
+{
+	import com.greensock.TweenNano;
+	import events.MainEvent;
+	import flash.display.MovieClip;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.geom.Rectangle;
+	import model.Global;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopLogo extends MovieClip 
+	{
+		public var mcLogo:MovieClip;
+		//public var mascaraLogin:MovieClip;
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		
+		public function PopLogo() 
+		{
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+		}
+		
+		private function init(e:Event):void 
+		{
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			//trace("ASDFASDF")
+			this.alpha = 0;
+			TweenNano.to(this, .2, { alpha:1, onComplete:tweenOpenComplete} );
+			
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			var guiSize:Rectangle = new Rectangle(0, 0, 1024, 600);
+			var deviceSize:Rectangle = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			var appSize:Rectangle = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+			this.x += appLeftOffset;
+			
+			this.y += (appSize.height - guiSize.height)/2
+		}
+		
+		private function tweenOpenComplete():void 
+		{
+			TweenNano.to(this, 1, { delay:2, alpha:0, onComplete:tweenCloseComplete} );
+		}
+		
+		private function tweenCloseComplete():void 
+		{
+			if(Global.noLinkage)Global.noLinkage.mcTopBar.mcLogoTipo.visible = true;
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopLogin", "PopLogo"));
+		}
+		
+	}
+
+}

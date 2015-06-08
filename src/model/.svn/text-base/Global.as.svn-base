@@ -1,0 +1,61 @@
+package model {
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class Global 
+	{
+		
+		//Simulacao SISTEMA Id Escola e Senha
+		public static var idEscola:String = "";
+		public static var senhaEscola:String = "";
+		public static var nomeEscola:String = "Escola de Educação Infantil Moreira Guimarães";
+		
+		//Numero minimo de alunos para iniciar a aula
+		public static var numMinAlunos:int = -1;
+		
+		//Codes e Nomes dos Videos
+		public static var arrIdCodeVideos:Array = ["v1235", "http://www.legozoom.com/","114554403049"];//["v1234", "v1235", "v1236"];
+		public static var arrVideos:Array = ["maquina_de_ondular_papel", "robo","carro_com_lagartas"];//["Robo", "Dragster", "Rover"];
+		public static var arrNomesVideos:Array = ["Máquina de Ondular Papel", "Robô", "Máquina com Lagartas"];//["Robo", "Dragster", "Rover"];
+		public static var arrAuxRelacaoVideos:Array = ["_1024x768", "_1280x736", "_1878x1080"];//["Robo", "Máquina de Ondular Papel", "Rover"];
+		
+		public static var contVideos:int = 0;
+		public static var arrMsgConteudoSingular:Array = ["Foi encontrado ", " novo conteúdo para o seu aplicativo. Deseja fazer download agora?"];
+		public static var arrMsgConteudoPlural:Array = ["Foram encontrados ", " novos conteúdos para o seu aplicativo. Deseja fazer download agora?"];
+		public static var strMsgConteudoDownload:String = "Aguarde... fazendo download de " + arrVideos.length + " novo(s) conteúdo(s)?";
+		
+		//Controles tela de Grupos
+		public static var arrNomeParticiantes:Array = ["", "", "", "", "", ""];
+		public static var idSelectParticipante:int = 0;
+		
+		//Simular retorno do SERVICO
+		public static var arrIdCodeProfessores:Array = ["p1234"];
+		public static var arrNomesProfessores:Array = ["Elias Moreira"];
+		public static var arrIdCodeAlunos:Array = ["a1234", "a1235", "a1236", "a1237", "a1238"];
+		public static var arrNomesAlunos:Array = ["Roberto Almeida", "João Mattar", "Maria Julia", "Solange Santos", "Marcos Pereira"];
+		
+		//Flv selecionado para download
+		public static var strVideoAtual:String = "";
+		
+		//Indica que o status d QRCode eh para seleção de Atividade
+		public static var blQRCodeAtividade:Boolean = false;
+		public static var strQRCode:String = "carro_com_lagartas";
+		public static var strWHVideo:String = "";
+		
+		//Array de Controle dos Ticks dos botoes da tela Atividades
+		public static var arrStatusTicks:Array = [false, false, false];
+		
+		public static var validaProfessor:Boolean = false;
+		public static var validaAluno:Boolean = false;
+		
+		public static var frameAtualVideo:Number = 1;
+		
+		public static var noLinkage;
+		
+		public static var stageScale:Number = 0;
+		public static var stageWidth:Number = 1024;
+		public static var stageHeight:Number = 695;
+	}
+
+}

@@ -1,0 +1,372 @@
+package  
+{
+	import com.greensock.TweenNano;
+	
+	import flash.display.MovieClip;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.HudButtons;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopQuiz extends MovieClip 
+	{
+		private var idQuiz:int = 0;
+		public var btMenu:HudButtons;
+		
+		private var posTituloX:int = 0;
+		private var posResp1X:int = 0;
+		private var posResp2X:int = 0;
+		private var posResp3X:int = 0;
+		
+		private var posX:int = 0;
+		private var posY:int = 0;
+		
+		public var mcPop:MovieClip;
+		public var mcQuiz:MovieClip;
+		
+		public var popMenu:mcPopMenuQuiz;
+		public var popConfirmResp:mcPopConfirmaResp;
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function PopQuiz() 
+		{
+			this.stop();
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+			//C.startOnStage(this, "`");
+			//C.commandLine = false;
+			//C.commandLineAllowed = false;
+			//C.x = 140;
+			//C.width = 700;
+			//C.height = 90;
+			//C.strongRef = true;
+			//C.visible = true;
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+		
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			this.txtTitulo.text = Global.arrNomesVideos[Global.arrVideos.indexOf(Global.strQRCode)];			
+			
+			this.setQuiz();	
+			
+			//C.log("WIDTH " +  Screen.mainScreen.visibleBounds.width);
+			//C.log("HEIGHT " +  Screen.mainScreen.visibleBounds.height);
+			//this.btMenu.x = Screen.mainScreen.visibleBounds.width - this.btMenu.width;
+			this.btMenu.buttonMode = true;
+			this.btMenu.addEventListener(MouseEvent.MOUSE_DOWN, handleDownBtMenu);
+			this.btMenu.addEventListener(MouseEvent.MOUSE_UP, handleUpBtMenu);
+			
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			guiSize = new Rectangle(0, 0, 1024, 600);
+			deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			//trace(appScale);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+
+			// menus are centered horizontally
+			btMenu.x += appLeftOffset;
+			staticAtv.x += appLeftOffset;
+			txtTitulo.x += appLeftOffset;
+			
+			quiz1.y += (appSize.height - guiSize.height)
+			quiz2.y += (appSize.height - guiSize.height)
+			quiz3.y += (appSize.height - guiSize.height)
+			quiz4.y += (appSize.height - guiSize.height)
+			
+			//this.mascaraQ.height = appSize.height;
+		}
+		
+		private function setQuiz():void
+		{
+			this.mcPop = this.getChildByName("mcPop" + this.currentFrame) as MovieClip;
+			this.mcPop.y += (appSize.height - guiSize.height)/2;
+				
+			this.mcQuiz = this.getChildByName("quiz" + this.currentFrame) as MovieClip;
+			this.mcQuiz.play();
+			
+			this.posTituloX = this.mcPop.titulo.x;
+			this.posResp1X = this.mcPop.bt1.x;
+			this.posResp2X = this.mcPop.bt2.x;
+			this.posResp3X = this.mcPop.bt3.x;
+			
+			this.posX = this.mcPop.x;
+			this.posY = this.mcPop.y;
+			
+			this.mcPop.titulo.x = this.posTituloX + stage.stageWidth;
+			this.mcPop.bt1.x = this.posResp1X + stage.stageWidth;
+			this.mcPop.bt2.x = this.posResp2X + stage.stageWidth;
+			this.mcPop.bt3.x = this.posResp3X + stage.stageWidth;
+			
+			var contVisibleFalse:int = 0;
+			for (var i:int = 1; this.mcPop.getChildByName("bt" + i); i++) 
+			{
+				var replica:HudButtons = this.mcPop.getChildByName("bt" + i) as HudButtons;
+				
+				replica.visible = true;
+				replica.buttonMode = true
+				replica.idNum = i;
+				replica.addEventListener(MouseEvent.MOUSE_DOWN, handleDownBt);
+				replica.addEventListener(MouseEvent.MOUSE_UP, handleUpBt);
+				
+			}
+			
+			//Entrada Objeto
+			TweenNano.to(this.mcPop.titulo, .4, { x:this.posTituloX + appLeftOffset } );
+			TweenNano.to(this.mcPop.bt1, .45, { x:this.posResp1X + appLeftOffset } );
+			TweenNano.to(this.mcPop.bt2, .5, { x:this.posResp2X + appLeftOffset } );
+			TweenNano.to(this.mcPop.bt3, .55, { x:this.posResp3X + appLeftOffset } );
+		}
+		
+		private function disableBts(status:Boolean=false):void 
+		{
+			for (var i:int = 1; this.mcPop.getChildByName("bt" + i); i++) 
+			{
+				var replica:HudButtons = this.mcPop.getChildByName("bt" + i) as HudButtons;
+				replica.idNum = i;
+				if (!status) {
+					replica.buttonMode = false
+					replica.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownBt);
+					replica.removeEventListener(MouseEvent.MOUSE_UP, handleUpBt);
+				}else {
+					replica.buttonMode = true
+					replica.addEventListener(MouseEvent.MOUSE_DOWN, handleDownBt);
+					replica.addEventListener(MouseEvent.MOUSE_UP, handleUpBt);
+				}
+			}
+		}
+		
+		//retira o design de selecao das opcoes
+		private function deselectBts():void 
+		{
+			for (var i:int = 1; this.mcPop.getChildByName("bt" + i); i++) 
+			{
+				var replica:HudButtons = this.mcPop.getChildByName("bt" + i) as HudButtons;
+				replica.buttonMode = true;
+				replica.alpha = 1;
+			}
+		}
+		
+		private function handleDownBt(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpBt(e:MouseEvent):void 
+		{
+			this.deselectBts();
+			this.disableBts(false);
+			e.currentTarget.buttonMode = false;
+			e.currentTarget.alpha = .6;
+			
+			this.popConfirmResp = new mcPopConfirmaResp();
+			this.addChild(this.popConfirmResp);
+			this.popConfirmResp.alpha = 0;
+			this.popConfirmResp.x += appLeftOffset;
+			this.popConfirmResp.y += (appSize.height - guiSize.height)/2
+			TweenNano.to(this.popConfirmResp, 1, { alpha:1 } );
+			
+			//Texto PopUp
+			var arrStrResp:Array = ["A", "B", "C"];
+			this.popConfirmResp.txtResp.text = "Resposta " + arrStrResp[e.currentTarget.idNum - 1] +"?";
+			
+			this.popConfirmResp.btConfirmar.buttonMode = true;
+			this.popConfirmResp.btConfirmar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownConfirmar);
+			this.popConfirmResp.btConfirmar.addEventListener(MouseEvent.MOUSE_UP, handleUpConfirmar);
+			this.popConfirmResp.btCancelar.buttonMode = true;
+			this.popConfirmResp.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmResp.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+		}
+		
+		private function handleDownConfirmar(e:MouseEvent):void 
+		{
+			this.mcQuiz.play();
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpConfirmar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			TweenNano.to(this.popConfirmResp, 1, { alpha:0, onComplete:tweenSelectOpcao } );
+			
+			this.popConfirmResp.btConfirmar.buttonMode = false;
+			this.popConfirmResp.btConfirmar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownConfirmar);
+			this.popConfirmResp.btConfirmar.removeEventListener(MouseEvent.MOUSE_UP, handleUpConfirmar);
+			this.popConfirmResp.btCancelar.buttonMode = false;
+			this.popConfirmResp.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmResp.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+		}
+		private function tweenSelectOpcao():void 
+		{
+			this.removeChild(this.popConfirmResp);
+			this.popConfirmResp = null;
+			this.deselectBts();
+			this.handleContinuar();
+		}
+		private function handleUpCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			TweenNano.to(this.popConfirmResp, 1, { alpha:0, onComplete:tweenClosePopResp } );
+			
+			this.popConfirmResp.btConfirmar.buttonMode = false;
+			this.popConfirmResp.btConfirmar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownConfirmar);
+			this.popConfirmResp.btConfirmar.removeEventListener(MouseEvent.MOUSE_UP, handleUpConfirmar);
+			this.popConfirmResp.btCancelar.buttonMode = false;
+			this.popConfirmResp.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmResp.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+		}
+		private function tweenClosePopResp():void 
+		{
+			this.disableBts(true);
+			this.removeChild(this.popConfirmResp);
+			this.popConfirmResp = null;
+			this.deselectBts();
+		}
+		
+		
+		//seleciona uma opcao BT_MENU
+		private function handleDownBtMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpBtMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			e.currentTarget.buttonMode = false;
+			
+			//PopConfirmacao
+			this.popMenu = new mcPopMenuQuiz();
+			this.addChild(this.popMenu);
+			this.popMenu.alpha = 0;
+			this.popMenu.x += appLeftOffset;
+			this.popMenu.y += (appSize.height - guiSize.height)/2
+			TweenNano.to(this.popMenu, 1, { alpha:1 } );
+			this.popMenu.btVoltaMontagem.buttonMode = true;
+			this.popMenu.btVoltaMontagem.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaExercicio);
+			this.popMenu.btVoltaMontagem.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaExercicio);
+			this.popMenu.btVoltaAtividade.buttonMode = true;
+			this.popMenu.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+		}
+		
+		private function handleDownVoltaExercicio(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownVoltaAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpVoltaExercicio(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.popMenu.btVoltaMontagem.buttonMode = false;
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaExercicio);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaExercicio);
+			this.popMenu.btVoltaAtividade.buttonMode = false;
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			TweenNano.to(this.popMenu, 1, { alpha:0, onComplete:tweenClosePopMenu } );
+		}
+		private function tweenClosePopMenu():void 
+		{
+			this.removeChild(this.popMenu);
+			this.popMenu = null;
+		}
+		
+		private function handleUpVoltaAtividade(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.popMenu.btVoltaMontagem.buttonMode = false;
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaExercicio);
+			this.popMenu.btVoltaMontagem.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaExercicio);
+			this.popMenu.btVoltaAtividade.buttonMode = false;
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaAtividade);
+			this.popMenu.btVoltaAtividade.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaAtividade);
+			
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopIniciaAtividade", "PopQuiz"));
+		}
+		
+		//clice botao de confirmar resposta
+		private function handleContinuar():void 
+		{
+			//Saida Objeto			
+			TweenNano.to(this.mcPop.titulo, .4, { x:-stage.stageWidth-350} );
+			TweenNano.to(this.mcPop.bt1, .45, { x:-stage.stageWidth-350} );
+			TweenNano.to(this.mcPop.bt2, .5, { x:-stage.stageWidth-350} );
+			TweenNano.to(this.mcPop.bt3, .55, { x:-stage.stageWidth-350, onComplete:tweenCompleteSaida } );
+		}
+		
+		private function tweenCompleteSaida():void 
+		{
+			if (this.currentFrame == this.totalFrames) {
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopIniciaAtividade", "PopQuiz"));
+			}else {
+				this.nextFrame();
+				this.setQuiz();
+			}
+		}
+		
+	}
+
+}

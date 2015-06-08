@@ -1,0 +1,117 @@
+package  
+{
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.filesystem.File;
+	import flash.geom.ColorTransform;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopNConteudos extends Sprite 
+	{
+		public var mcPopC:MovieClip;
+		
+		public function PopNConteudos() 
+		{
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			this.alpha = 0;
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			TweenNano.to(this, 1, { alpha:1 } );
+			
+			var status:Boolean = false;
+			Global.contVideos = 0;
+			for (var i:int = 0; i < Global.arrVideos.length; i++ ) 
+			{
+				if (File.applicationStorageDirectory.resolvePath(Global.arrVideos[i]+Global.arrAuxRelacaoVideos[0]+".flv").exists || File.applicationStorageDirectory.resolvePath(Global.arrVideos[i]+Global.arrAuxRelacaoVideos[1]+".flv").exists || File.applicationStorageDirectory.resolvePath(Global.arrVideos[i]+Global.arrAuxRelacaoVideos[2]+".flv").exists) {
+					status = false;
+				}else {
+					status = true;
+					Global.contVideos += 1;
+				}
+			}
+			
+			//Nao foiencontrado nenhum video ara download, pois todos estao instalados
+			C.log("AEEAEAEAEAEA "+Global.contVideos);
+			if (Global.contVideos == 0) {
+				this.visible = false;
+				this.clean();
+				
+				if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopConteudo"));
+				
+			}else {
+				var arrMsgs:Array = Global.contVideos == 1 ? Global.arrMsgConteudoSingular : Global.arrMsgConteudoPlural;
+				this.mcPopC.txtMsg.text = arrMsgs[0] + Global.contVideos + arrMsgs[1];
+				this.mcPopC.btContinuar.buttonMode = true;
+				this.mcPopC.btContinuar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownConfirma);
+				this.mcPopC.btContinuar.addEventListener(MouseEvent.MOUSE_UP, handleUpConfirma);
+				this.mcPopC.btCancelar.buttonMode = true;
+				this.mcPopC.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancela);
+				this.mcPopC.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancela);
+			}
+		}
+		
+		private function handleDownConfirma(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpConfirma(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			TweenNano.to(this, 1, {alpha:0, onComplete:tweenOpenPopDownload});
+		}
+		
+		private function tweenOpenPopDownload():void 
+		{
+			PopVerificaConteudo.instance.removeChild(PopVerificaConteudo.instance.popNConteudos);
+			PopVerificaConteudo.instance.popNConteudos = null;
+			PopVerificaConteudo.instance.loadPopDownload();
+		}
+		
+		private function handleDownCancela(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpCancela(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopConteudo"));
+			
+		}
+		
+		private function clean()
+		{
+			this.mcPopC.btContinuar.buttonMode = false;
+			this.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownConfirma);
+			this.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpConfirma);
+			this.mcPopC.btCancelar.buttonMode = false;
+			this.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancela);
+			this.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancela);
+		}
+
+	}
+
+}

@@ -1,0 +1,201 @@
+package {
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.display.Screen;
+	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	import flash.system.Capabilities;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.FindInterfaces;
+	import utils.FindInterfacesIOS;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopVerificaConteudo extends Sprite 
+	{
+		private var findInterface:FindInterfaces;
+		
+		public var popLoad:MovieClip;
+		public var popNConteudos:mcPopNConteudos;
+		public var popDownload:mcPopDownload;
+		
+		//pattern Singleton
+		private static var _instance:PopVerificaConteudo;
+		public static function get instance():PopVerificaConteudo { return _instance };
+		//
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function PopVerificaConteudo() 
+		{
+			_instance = this;
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+			//C.startOnStage(this, "`");
+			//C.commandLine = false;
+			//C.commandLineAllowed = false;
+			//C.x = 140;
+			//C.width = 850;
+			//C.height = 90;
+			//C.strongRef = true;
+			//C.visible = true;
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			//Encontrar rede 3G
+			this.findInterface = new FindInterfaces();
+			
+			this.logicaCarregamentoVideos();
+			
+			if(Capabilities.os.indexOf("iPhone") != -1)
+			{
+				var findIOS:FindInterfacesIOS = new FindInterfacesIOS();
+				findIOS.find();
+				
+				if (findIOS.find()) {
+					//TODO: Solicitacao para o WEBSERVICE
+					TweenNano.delayedCall(2, delayPopNConteudos);
+					
+					this.popLoad.btCancelar.buttonMode = true;
+					this.popLoad.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+					this.popLoad.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+				}else {
+					TweenNano.delayedCall(2, delayConnFalse);
+					this.popLoad.btCancelar.alpha = .4;
+				}
+			}else{
+				if (this.findInterface.find()) {
+					//TODO: Solicitacao para o WEBSERVICE
+					TweenNano.delayedCall(2, delayPopNConteudos);
+					
+					this.popLoad.btCancelar.buttonMode = true;
+					this.popLoad.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+					this.popLoad.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+				}else {
+					TweenNano.delayedCall(2, delayConnFalse);
+				}
+			}
+			
+		}
+		
+		private function logicaCarregamentoVideos():void
+		{	
+			var altura:Number = Screen.mainScreen.visibleBounds.height;
+			C.log("SCREEN H " + altura);
+			if (altura == 1024 || altura == 2048 || altura == 768) {
+				Global.strWHVideo = "_1024x768";
+			}else if (altura > 710 && altura <= 800) {
+				Global.strWHVideo = "_1280x736";
+			}else {
+				Global.strWHVideo = "_1878x1080";
+			}
+			C.log(Global.strWHVideo);
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			 guiSize = new Rectangle(0, 0, 1024, 600);
+		 	deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			//trace(appScale);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+			popLoad.x += appLeftOffset;
+			
+			popLoad.y += (appSize.height - guiSize.height)/2
+			//this.mascara.height = appSize.height;
+
+		}
+		
+		
+		private function delayConnFalse():void 
+		{
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopConteudo"));
+		}
+		
+		//PopConteudos
+		private function delayPopNConteudos()
+		{
+			this.popNConteudos = new mcPopNConteudos();
+			this.addChild(this.popNConteudos);
+			this.popNConteudos.x += appLeftOffset;
+			popNConteudos.y += (appSize.height - guiSize.height)/2
+				
+			TweenNano.to(this.popLoad, .5, { alpha:0 } );
+		}
+		
+		private function handleDownCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			if(this.popNConteudos)this.popNConteudos.visible = false;
+			this.popLoad.btCancelar.buttonMode = false;
+			this.popLoad.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popLoad.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+			this.delayConnFalse();
+		}
+		
+		//Pop download videos
+		public function loadPopDownload():void
+		{
+			this.popDownload = new mcPopDownload();
+			this.addChild(this.popDownload);
+			this.popDownload.x += appLeftOffset;
+			this.popDownload.y += (appSize.height - guiSize.height)/2
+		}
+	}
+
+}

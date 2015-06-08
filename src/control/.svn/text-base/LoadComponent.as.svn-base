@@ -1,0 +1,156 @@
+﻿package control{
+	import com.greensock.TweenNano;
+	
+	import flash.display.Loader;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.utils.getDefinitionByName;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class LoadComponent extends Sprite {
+		
+		private var ld:Loader;
+		private var arrLoader:Array = [];
+		private var typeLoad:String = "";
+		
+		private var strNome:String = "";
+		
+		private var blTransicao:Boolean = false;
+		
+		private static const TIME:Number = .5;
+		
+		/**
+		 * Construtor
+		 */
+		public function LoadComponent() {
+			
+			if(!this.hasEventListener(MainEvent.ADD_COMPONENT)){
+				this.addEventListener(MainEvent.ADD_COMPONENT, addComponent);
+				this.addEventListener(MainEvent.REMOVE_COMPONENT, removeComponent);
+			}	
+			
+		}
+		
+		/**
+		 * Funcao que adiciona o componente carregado
+		 * 
+		 * @param	event evento da classe de eventos personalizada MainEvent
+		 */
+		private function addComponent(event:MainEvent):void 
+		{
+			var ClassReference:Class = getDefinitionByName("Mc" + event.strUrlAdd) as Class;
+			
+			Global.noLinkage.mcHolder.addChild(ClassReference);
+			
+			//if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = true;
+			/*var context;
+			var request:URLRequest = new URLRequest(event.strUrlAdd + ".swf");
+			
+			context ||= new LoaderContext(false, ApplicationDomain.currentDomain, null);        
+			var url:String = request.url;
+			if (url.indexOf(":/") == -1)
+			{
+				var dir:File = File.applicationDirectory; 
+				if (url.indexOf(".swf") == -1)
+				{
+					dir = dir.resolvePath(url);
+					request.url = dir.url;
+				} else {
+					// Generate a brand new file path to make sure the file is considered as a new swf
+					// This enables to workround the Air 3.6 issue on iOS where we cannot reload a swf that has been unloaded
+					// (@see Error #3764: Reloading a SWF is not supported on this operating system. 
+					dir = dir.resolvePath(url);
+					request.url = dir.url + "?newfile="+getTimer();
+					request.cacheResponse   = false;
+					request.useCache        = false;
+				}
+			}
+			this.ld.load(request, context);
+			
+			//var lf:Loader = new Loader();
+			var lc:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain, null);
+			this.ld = new Loader();
+			if(Global.noLinkage)Global.noLinkage.mcHolder.addChild(this.ld);
+			this.ld.contentLoaderInfo.addEventListener(Event.COMPLETE, onComplete); 
+			C.log(File.applicationDirectory)
+			var swf:File = File.applicationDirectory.resolvePath('swfs/PopLogo.swf'); 
+			C.log("EXIST    "+swf.exists)
+			if (swf.exists)
+			{
+			this.ld.load(new URLRequest(swf.url), lc);
+			}
+			
+			
+			function onComplete(e:Event):void
+			{
+			
+			//if(Global.noLinkage)Global.noLinkage.mcHolder.addChild(this.ld);
+			//TweenNano.to(this.ld, LoadComponent.TIME, { alpha:1 } );
+			}
+			*/
+			
+			
+			
+			
+			
+			
+			
+		}	
+		
+		/**
+		 * Funcao que remove o componente
+		 * 
+		 * @param	event evento da classe de eventos personalizada MainEvent
+		 */
+		private function removeComponent(event:MainEvent):void {
+			//while (Main.instance.carregar) {
+				//Main.instance.removeChild(Main.instance.carregar);
+				//Main.instance.carregar = null;
+			//}
+			//Main.instance.mainSound.play("3", false, 9999);
+			if (event.strUrlAdd != "") {
+				//Main.instance.mcMarcaLoad.gotoAndPlay("open");
+				TweenNano.to(this.ld, .5, { alpha:.1, onComplete:tweenUnLoadComplete, onCompleteParams:[event] } );
+			}else {
+				TweenNano.to(this.ld, .5, { alpha:.1, onComplete:tweenUnLoadComplete, onCompleteParams:[event] } );
+			}
+			
+		}
+		
+		private function tweenUnLoadComplete(event:MainEvent):void 
+		{	
+			//this.ld.unloadAndStop();
+			
+			//C.log("*******  REMOVE " + event.strUrlRemove + "  -  ADICIONA "+ event.strUrlAdd);
+			if (event.strUrlAdd != "") 
+			{
+				
+				this.dispatchEvent(new MainEvent(MainEvent.ADD_COMPONENT, event.strUrlAdd, "", true));
+			}else {
+				this.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPLETED, "", event.strUrlRemove));
+			}
+			
+			//this.dispatchEvent(new MainEvent(MainEvent.COMPLETE_UNLOAD, "", ""));
+		}
+		
+		
+		/**
+		 * Funcao ativada quando o Swf termina de carregar, poe ele na tela e inicializa o construtor ( se houver )
+		 * 
+		 * @param	event
+		 */
+		private function loaderComplete(event:Event):void {
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			TweenNano.to(this.ld, LoadComponent.TIME, { alpha:1 } );
+		}
+		
+	}
+
+}

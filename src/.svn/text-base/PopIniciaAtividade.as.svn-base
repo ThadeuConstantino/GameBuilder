@@ -1,0 +1,349 @@
+﻿package  
+{
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.Bitmap;
+	import flash.display.Loader;
+	import flash.display.MovieClip;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	import flash.net.URLRequest;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.CameraUtil;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopIniciaAtividade extends MovieClip 
+	{
+		
+		public var popMenu:mcPopMenuAtv;
+		public var popConfirmar:mcPopConfirmar;
+		
+		//pattern Singleton
+		private static var _instance:PopIniciaAtividade;
+		public static function get instance():PopIniciaAtividade { return _instance };
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public function PopIniciaAtividade() 
+		{
+			_instance = this;
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+			//C.startOnStage(this, "`");
+			//C.commandLine = false;
+			//C.commandLineAllowed = false;
+			//C.x = 140;
+			//C.width = 700;
+			//C.height = 90;
+			//C.strongRef = true;
+			//C.visible = true;
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			this.btVolta.buttonMode = true;
+			this.btVolta.addEventListener(MouseEvent.MOUSE_DOWN, handeDownVolta);
+			this.btVolta.addEventListener(MouseEvent.MOUSE_UP, handeUpVolta);
+			
+			this.btMenu.buttonMode = true;
+			this.btMenu.addEventListener(MouseEvent.MOUSE_DOWN, handeDownMenu);
+			this.btMenu.addEventListener(MouseEvent.MOUSE_UP, handeUpMenu);
+			
+			this.btAssistirMontagem.buttonMode = true;
+			this.btAssistirMontagem.addEventListener(MouseEvent.MOUSE_DOWN, handeDownAssitirMontagem);
+			this.btAssistirMontagem.addEventListener(MouseEvent.MOUSE_UP, handeUpAssitirMontagem);
+			
+			this.btTirarFoto.buttonMode = true;
+			this.btTirarFoto.addEventListener(MouseEvent.MOUSE_DOWN, handeDownTirarFoto);
+			this.btTirarFoto.addEventListener(MouseEvent.MOUSE_UP, handeUpTirarFoto);
+			
+			this.btQuiz.buttonMode = true;
+			this.btQuiz.addEventListener(MouseEvent.MOUSE_DOWN, handeDownQuiz);
+			this.btQuiz.addEventListener(MouseEvent.MOUSE_UP, handeUpQuiz);
+			
+			//Preenche o nome da Atividade
+			if (Global.noLinkage) this.txtTitulo.text = Global.arrNomesVideos[Global.arrVideos.indexOf(Global.strQRCode)];
+			this.loadThumbImg();
+			
+			this.validaTick();
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			guiSize = new Rectangle(0, 0, 1024, 600);
+			deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+
+			appSize = guiSize.clone();
+
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+			// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			//trace(appScale);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+
+			// menus are centered horizontally
+			this.btMenu.x += appLeftOffset;
+			this.txtStAtividade.x += appLeftOffset;
+			this.txtTitulo.x += appLeftOffset;
+			this.mcHolder.x += appLeftOffset;
+			this.popLoad.x += appLeftOffset;
+			this.btAssistirMontagem.x += appLeftOffset;
+			this.btTirarFoto.x += appLeftOffset;
+			this.btQuiz.x += appLeftOffset;
+			this.mcTick1.x += appLeftOffset;
+			this.mcTick2.x += appLeftOffset;
+			this.mcTick3.x += appLeftOffset;
+			
+			
+			// menus are top horizontally
+			this.txtStAtividade.y += (appSize.height - guiSize.height)/2
+			this.txtTitulo.y += (appSize.height - guiSize.height)/2
+			this.popLoad.y += (appSize.height - guiSize.height)/2
+			this.mcHolder.y += (appSize.height - guiSize.height)/2
+			this.btVolta.y += (appSize.height - guiSize.height)/2
+			this.mcTick1.y += (appSize.height - guiSize.height)/2
+			this.mcTick2.y += (appSize.height - guiSize.height)/2
+			this.mcTick3.y += (appSize.height - guiSize.height)/2
+			this.btAssistirMontagem.y += (appSize.height - guiSize.height)/2
+			this.btTirarFoto.y += (appSize.height - guiSize.height)/2
+			this.btQuiz.y += (appSize.height - guiSize.height)/2
+			
+			// mascara adjust height
+			//this.mascaraIA.height = appSize.height;
+		}
+		
+		public function validaTick()
+		{
+			for (var i:int = 1; this.getChildByName("mcTick" + i); i++) {
+				var tick:MovieClip = this.getChildByName("mcTick" + i) as MovieClip;
+				tick.visible = Global.arrStatusTicks[i - 1];
+			}
+		}
+		
+		private function loadThumbImg():void 
+		{
+			var ldr:Loader = new Loader();
+			trace("http://thadeuconstantino.com/" + Global.strQRCode+".png")
+			var url:String = "http://thadeuconstantino.com/" + Global.strQRCode+".png";
+			var urlReq:URLRequest = new URLRequest(url); 
+			ldr.load(urlReq); 
+			ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, completeDownloadImg);
+			
+		}
+		
+		private function completeDownloadImg(e:Event):void 
+		{
+			
+			trace("CARREGADA " + e.target.content);
+			var bmp:Bitmap = e.target.content;
+			if(bmp != null){
+				bmp.smoothing = true;
+			}
+			this.mcHolder.addChild(bmp);
+			
+			
+			this.removeChild(this.popLoad);
+		}
+		
+		private function clean():void 
+		{
+			this.btVolta.buttonMode = false;
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_DOWN, handeDownVolta);
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_UP, handeUpVolta);
+			this.btMenu.buttonMode = false;
+			this.btMenu.removeEventListener(MouseEvent.MOUSE_DOWN, handeDownMenu);
+			this.btMenu.removeEventListener(MouseEvent.MOUSE_UP, handeUpMenu);
+		}
+		
+		public function removePopMenu()
+		{
+			C.log("REMOVE POP MENU");
+			TweenNano.to(this.popMenu, 1, { alpha:0, onComplete:tweenClosePopMenu } );
+		}
+		
+		private function tweenClosePopMenu():void 
+		{
+			this.removeChild(this.popMenu);
+			this.popMenu = null;
+		}
+		
+		//Listener's
+		private function handeDownVolta(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownAssitirMontagem(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownTirarFoto(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeDownQuiz(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handeUpVolta(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			Global.blQRCodeAtividade = true;
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "QRCode", "PopIniciaAtividade"));
+		}
+		
+		private function handeUpMenu(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.popMenu = new mcPopMenuAtv();
+			this.addChild(this.popMenu);
+			this.popMenu.alpha = 0;
+			this.popMenu.x += appLeftOffset;
+			this.popMenu.y += (appSize.height - guiSize.height)/2
+			
+			TweenNano.to(this.popMenu, 1, { alpha:1 } );
+		}
+		
+		//Roda o video da montagem da anima
+		private function handeUpAssitirMontagem(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			Global.arrStatusTicks[0] = true;
+			this.clean();
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "DragsterMob", "PopIniciaAtividade"));
+		}
+		
+		//Tira Fotos
+		private function handeUpTirarFoto(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			Global.arrStatusTicks[1] = true;
+			var cameraUtil:CameraUtil = new CameraUtil();
+			//this.addChild(cameraUtil);
+		}
+		
+		//Chama o Quiz
+		private function handeUpQuiz(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			Global.arrStatusTicks[2] = true;
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopQuiz", "PopIniciaAtividade"));
+		}
+		
+		//Pop Confirma Encerramento de aula
+		public function insertPopConfirma()
+		{
+			this.popConfirmar = new mcPopConfirmar();
+			this.addChild(this.popConfirmar);
+			this.popConfirmar.alpha = 0;
+			this.popConfirmar.x += appLeftOffset;
+			this.popConfirmar.y += (appSize.height - guiSize.height)/2
+			TweenNano.to(this.popConfirmar, 1, { alpha:1 } );
+			
+			this.removePopMenu();
+			
+			this.popConfirmar.mcPopC.btContinuar.buttonMode = true;
+			this.popConfirmar.mcPopC.btContinuar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popConfirmar.mcPopC.btContinuar.addEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popConfirmar.mcPopC.btCancelar.buttonMode = true;
+			this.popConfirmar.mcPopC.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmar.mcPopC.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+		}
+		
+		private function handleDownContinuar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpContinuar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popConfirmar.mcPopC.btContinuar.buttonMode = false;
+			this.popConfirmar.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popConfirmar.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popConfirmar.mcPopC.btCancelar.buttonMode = false;
+			this.popConfirmar.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmar.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+			
+			Global.arrNomeParticiantes = ["", "", "", "", "", ""];
+			if (Global.noLinkage) Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "PopIniciaAtividade"));
+		}
+		
+		private function handleUpCancelar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popConfirmar.mcPopC.btContinuar.buttonMode = false;
+			this.popConfirmar.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownContinuar);
+			this.popConfirmar.mcPopC.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
+			this.popConfirmar.mcPopC.btCancelar.buttonMode = false;
+			this.popConfirmar.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelar);
+			this.popConfirmar.mcPopC.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelar);
+			
+			TweenNano.to(this.popConfirmar, 1, { alpha:0, onComplete:tweenClosePopConfirmar } );
+		}
+		
+		private function tweenClosePopConfirmar():void 
+		{
+			this.removeChild(this.popConfirmar);
+			this.popConfirmar = null;
+		}
+		
+	}
+
+}

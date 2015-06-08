@@ -1,0 +1,376 @@
+﻿
+/**************************************************************************
+ * LOGOSWARE Class Library.
+ *
+ * Copyright 2009 (c) LOGOSWARE (http://www.logosware.com) All rights reserved.
+ *
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ **************************************************************************/ 
+package 
+{
+	import com.blogspot.visualscripts.zbar.Zbar;
+	import com.greensock.TweenNano;
+	import com.luaye.console.C;
+	
+	import flash.display.MovieClip;
+	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.MouseEvent;
+	import flash.filesystem.File;
+	import flash.geom.ColorTransform;
+	import flash.geom.Rectangle;
+	import flash.utils.Timer;
+	
+	import events.MainEvent;
+	
+	import model.Global;
+	
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * QRコード解析クラスの使用例です
+	 * @author Kenichi UENO
+	 */
+	public class ReadQrCodeSample extends Sprite 
+	{
+		
+		private var cameraTimer:Timer = new Timer(2000);
+		
+		private var textArray:Array = ["", "", ""];
+		
+		//Scale Objetos
+		public var appScale:Number = 1;
+		public var appLeftOffset:Number = 0;
+		
+		private var guiSize:Rectangle;
+		private var deviceSize:Rectangle;
+		private var appSize:Rectangle;
+		
+		public var popDownloadVideos:mcPopDownloadVideos;
+		public var popDownloadQr:mcPopDownloadQR;
+		
+		//pattern Singleton
+		private static var _instance:ReadQrCodeSample;
+		public static function get instance():ReadQrCodeSample { return _instance };
+		//
+		
+		public function ReadQrCodeSample():void {
+			
+			_instance = this;
+			this.mcTextArea.gotoAndStop(1);
+			this.mcTextArea.alpha = 0;
+			this.mcTextArea.visible = false;
+			
+			this.btVolta.buttonMode = true;
+			this.btVolta.addEventListener(MouseEvent.MOUSE_DOWN, handledownVoltar);
+			this.btVolta.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltar);
+			
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+			
+			this.b1_mc.buttonMode = true;
+			this.b1_mc.addEventListener(MouseEvent.MOUSE_DOWN, handleDownScan);
+			this.b1_mc.addEventListener(MouseEvent.MOUSE_UP, scanFunc);
+			
+			//QRCode digitando no campo de texto
+			this.mcAreaQR.txtQRCode.addEventListener(FocusEvent.FOCUS_IN, focusInQRCodeHandler);
+			this.mcAreaQR.btConfirmCode.addEventListener(MouseEvent.MOUSE_DOWN, handleDownDigitaQRCode);
+			this.mcAreaQR.btConfirmCode.addEventListener(MouseEvent.MOUSE_UP, handleUpDigitaQRCode);
+		}
+		
+		private function handleDownDigitaQRCode(e:MouseEvent)
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpDigitaQRCode(e:MouseEvent)
+		{
+			e.currentTarget.alpha = 1;
+			this.onQRCode("", this.mcAreaQR.txtQRCode.text);
+		}
+		
+		private function focusInQRCodeHandler(e:FocusEvent):void 
+		{
+			this.mcAreaQR.txtQRCode.text = "";
+		}
+		
+		private function handleUpVoltar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+		}
+		
+		private function handleDownScan(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function scanFunc(e:MouseEvent):void
+		{	
+			
+			var zb:Zbar = new Zbar();
+			//C.log("CLIQUEEEEE EEEE " + zb);
+			zb.scanCode( onQRCode );
+			
+			e.currentTarget.alpha = 1;
+		}
+		
+		private function clean()
+		{
+			this.btVolta.buttonMode = false;
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_DOWN, handledownVoltar);
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltar);
+			
+			this.b1_mc.buttonMode = false;
+			this.b1_mc.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownScan);
+			this.b1_mc.removeEventListener(MouseEvent.MOUSE_UP, scanFunc);
+		}
+		
+		private function onQRCode(statusCode:String,decodedTxt:String):void
+		{
+			this.qrText_txt.text = statusCode+" - " + decodedTxt;
+			
+			if (Global.blQRCodeAtividade) {
+				if (Global.arrIdCodeVideos.indexOf(String(decodedTxt)) != -1 && File.applicationStorageDirectory.resolvePath(Global.arrVideos[Global.arrIdCodeVideos.indexOf(decodedTxt)]+Global.strWHVideo+".flv").exists)
+				{
+					Global.frameAtualVideo = 1;
+					this.entradaSaidaMsg(1, "PopIniciaAtividade");
+					Global.strQRCode = Global.arrVideos[Global.arrIdCodeVideos.indexOf(decodedTxt)];
+				}else if(Global.arrIdCodeVideos.indexOf(String(decodedTxt)) != -1 && !File.applicationStorageDirectory.resolvePath(Global.arrVideos[Global.arrIdCodeVideos.indexOf(decodedTxt)]+Global.strWHVideo+".flv").exists){
+					//this.mcAreaDownQR.visible = true;
+					//this.btInicioDownload.visible = true;
+					//this.btInicioDownload.buttonMode = true;
+					//this.btInicioDownload.addEventListener(MouseEvent.MOUSE_DOWN, handleDownload);
+					//this.btInicioDownload.addEventListener(MouseEvent.MOUSE_UP, handleUpload);
+					Global.strQRCode = Global.arrVideos[Global.arrIdCodeVideos.indexOf(decodedTxt)];
+					Global.strVideoAtual = Global.arrVideos[Global.arrIdCodeVideos.indexOf(decodedTxt)]+Global.strWHVideo+".flv";
+					this.loadPopDownloadVideos();
+				}
+				else{
+					this.entradaSaidaMsg(2);
+				}
+			}else {
+				if (Global.arrIdCodeProfessores.indexOf(decodedTxt) != -1 && Global.idSelectParticipante == 0)
+				{
+					this.entradaSaidaMsg(1, "PopConfigGrupo");
+					Global.arrNomeParticiantes[Global.idSelectParticipante] = Global.arrNomesProfessores[Global.idSelectParticipante];
+				}else if (Global.idSelectParticipante != 0 && Global.arrIdCodeAlunos.indexOf(decodedTxt) != -1 && Global.arrNomeParticiantes.indexOf(Global.arrNomesAlunos[Global.arrIdCodeAlunos.indexOf(decodedTxt)]) == -1) {
+					//C.log(Global.idSelectParticipante + "    " +Global.arrIdCodeAlunos.indexOf(decodedTxt));
+					//C.log(Global.arrNomesAlunos[Global.arrIdCodeAlunos.indexOf(decodedTxt)]);
+					this.entradaSaidaMsg(1, "PopConfigGrupo");
+					Global.arrNomeParticiantes[Global.idSelectParticipante] = Global.arrNomesAlunos[Global.arrIdCodeAlunos.indexOf(decodedTxt)];
+				}else if (Global.idSelectParticipante != 0 && Global.arrIdCodeAlunos.indexOf(decodedTxt) != -1 && Global.arrNomeParticiantes.indexOf(Global.arrNomesAlunos[Global.arrIdCodeAlunos.indexOf(decodedTxt)]) != -1) {
+					this.entradaSaidaMsg(3);
+				}else {
+					this.entradaSaidaMsg(2);
+				}
+			}
+			
+			//Global.blQRCodeAtividade = false;
+		}
+		
+		//private function handleDownload(e:MouseEvent)
+	//	{
+			//var testClipTransform:ColorTransform = new ColorTransform(0, 0, 0, .5, 0, 0, 0, 1);
+	//		//e.currentTarget.transform.colorTransform = testClipTransform;
+		//}
+		//private function handleUpload(e:MouseEvent)
+		//{
+			//var testClipTransform:ColorTransform = new ColorTransform();
+			//e.currentTarget.transform.colorTransform = testClipTransform;
+			//this.btInicioDownload.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownload);
+			//this.btInicioDownload.removeEventListener(MouseEvent.MOUSE_UP, handleUpload);
+			//this.loadPopDownloadVideos();
+		//}
+		
+		private function loadPopDownloadQR():void
+		{
+			this.popDownloadQr = new mcPopDownloadQR();
+			this.addChild(this.popDownloadQr);
+			this.popDownloadQr.x += appLeftOffset;
+			this.popDownloadQr.y += (appSize.height - guiSize.height)/2
+				
+			this.removeChild(this.popDownloadVideos);
+			this.popDownloadVideos = null;
+		}
+		
+		private function loadPopDownloadVideos()
+		{
+			this.popDownloadVideos = new mcPopDownloadVideos();
+			this.addChild(this.popDownloadVideos);
+			this.popDownloadVideos.alpha = 0;
+			this.popDownloadVideos.x += appLeftOffset;
+			this.popDownloadVideos.y += (appSize.height - guiSize.height)/2;
+			
+			this.popDownloadVideos.btDownload.buttonMode = true;
+			this.popDownloadVideos.btDownload.addEventListener(MouseEvent.MOUSE_DOWN, handleDownPopDownload);
+			this.popDownloadVideos.btDownload.addEventListener(MouseEvent.MOUSE_UP, handleUpPopDownload);
+			this.popDownloadVideos.btCancelar.buttonMode = true;
+			this.popDownloadVideos.btCancelar.addEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelarDownload);
+			this.popDownloadVideos.btCancelar.addEventListener(MouseEvent.MOUSE_UP, handleUpCancelarDownload);
+			
+			
+			TweenNano.to(this.popDownloadVideos, 1, { alpha:1 } );
+		}
+		private function handleDownPopDownload(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleDownCancelarDownload(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		private function handleUpPopDownload(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popDownloadVideos.btDownload.buttonMode = false;
+			this.popDownloadVideos.btDownload.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownPopDownload);
+			this.popDownloadVideos.btDownload.removeEventListener(MouseEvent.MOUSE_UP, handleUpPopDownload);
+			this.popDownloadVideos.btCancelar.buttonMode = false;
+			this.popDownloadVideos.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelarDownload);
+			this.popDownloadVideos.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelarDownload);
+			
+			TweenNano.to(this.popDownloadVideos, 1, { alpha:0, onComplete:loadPopDownloadQR } );
+			
+		}
+		private function handleUpCancelarDownload(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			
+			this.popDownloadVideos.btDownload.buttonMode = false;
+			this.popDownloadVideos.btDownload.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownPopDownload);
+			this.popDownloadVideos.btDownload.removeEventListener(MouseEvent.MOUSE_UP, handleUpPopDownload);
+			this.popDownloadVideos.btCancelar.buttonMode = false;
+			this.popDownloadVideos.btCancelar.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownCancelarDownload);
+			this.popDownloadVideos.btCancelar.removeEventListener(MouseEvent.MOUSE_UP, handleUpCancelarDownload);
+			
+			TweenNano.to(this.popDownloadVideos, 1, { alpha:0, onComplete:tweenClosePopDownload } );
+		}
+		
+		private function tweenClosePopDownload():void 
+		{
+			this.removeChild(this.popDownloadVideos);
+			this.popDownloadVideos = null;
+		}
+		
+		
+		
+		private function handledownVoltar(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+			this.btVolta.buttonMode = false;
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_DOWN, handledownVoltar);
+			this.btVolta.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltar);
+			if(Global.noLinkage)Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, "PopConfigGrupo", "QRCode"));
+		}
+		
+		private function init(e:Event):void 
+		{
+			this.removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			//this.mcAreaDownQR.visible = false;
+			//this.btInicioDownload.visible = false;
+			if(Global.noLinkage)Global.noLinkage.loadingFiles.visible = false;
+			
+			this.calculoResponsivo();
+			
+			if (Global.blQRCodeAtividade) {
+				this.txtTitulo.text = "DA ATIVIDADE";
+				return;
+			}
+			
+			if (Global.idSelectParticipante == 0) {
+				this.txtTitulo.text = "DO PROFESSOR";
+			}else {
+				this.txtTitulo.text = "DO ALUNO";
+			}
+			
+		}
+		
+		private function calculoResponsivo():void 
+		{			
+			guiSize = new Rectangle(0, 0, 1024, 600);
+			deviceSize = new Rectangle(0, 0,
+			Math.max(stage.fullScreenWidth, stage.fullScreenHeight),
+			Math.min(stage.fullScreenWidth, stage.fullScreenHeight));
+			
+			appSize = guiSize.clone();
+			
+			// if device is wider than GUI's aspect ratio, height determines scale
+			if ((deviceSize.width/deviceSize.height) > (guiSize.width/guiSize.height)) {
+				appScale = deviceSize.height / guiSize.height;
+				appSize.width = deviceSize.width / appScale;
+				appLeftOffset = Math.round((appSize.width - guiSize.width) / 2);
+				
+			} 
+				// if device is taller than GUI's aspect ratio, width determines scale
+			else {
+				appScale = deviceSize.width / guiSize.width;
+				appSize.height = deviceSize.height / appScale;
+				appLeftOffset = 0;
+			}
+			//trace(appScale);
+			// scale the entire interface
+			this.scaleX = this.scaleY = appScale;
+			// map stays at the top left and fills the whole screen
+			this.x = 0;
+			this.txtStatic.x += appLeftOffset;
+			this.txtTitulo.x += appLeftOffset;
+			this.b1_mc.x += appLeftOffset;
+			this.mcTextArea.x += appLeftOffset;
+			
+			this.btVolta.y += (appSize.height - guiSize.height)/2
+			this.b1_mc.y += (appSize.height - guiSize.height)/2
+			this.mcTextArea.y += (appSize.height - guiSize.height)/2
+			this.mcAreaQR.y += (appSize.height - guiSize.height)/2
+			//this.mcAreaDownQR.y += (appSize.height - guiSize.height)
+			//this.btInicioDownload.y += (appSize.height - guiSize.height)
+			
+			//this.mascaraQC.height = appSize.height;
+		}
+		
+		private function entradaSaidaMsg(id:int, proximaTela:String=""):void 
+		{
+			if (id == 1) this.clean();
+			
+			if(id == 3){
+				this.mcTextArea.gotoAndStop(3);
+			}else{
+				this.mcTextArea.gotoAndStop(id == 1 ? 1: 2);
+			}
+			
+			this.mcTextArea.visible = true;
+			TweenNano.to(this.mcTextArea, .5, { delay:.5, alpha:1, onComplete:removeMsg, onCompleteParams:[id, proximaTela] } );
+		}
+		
+		private function removeMsg(id:int, proximaTela:String):void 
+		{
+			TweenNano.to(this.mcTextArea, .5, { delay:2, alpha:0, onComplete:avancaProximaTela, onCompleteParams:[id, proximaTela] } );
+		}
+		
+		private function avancaProximaTela(id:int, proximaTela:String):void 
+		{
+			this.mcTextArea.visible = false;
+			if (Global.noLinkage && proximaTela != "") Global.noLinkage.dispatchEvent(new MainEvent(MainEvent.REMOVE_COMPONENT, proximaTela, "QRCode"));
+		}
+		
+	}
+	
+}

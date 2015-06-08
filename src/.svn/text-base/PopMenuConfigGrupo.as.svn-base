@@ -1,0 +1,102 @@
+package  
+{
+	import flash.display.MovieClip;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.ColorTransform;
+	
+	import model.Global;
+	
+	import utils.ConstructAlpha;
+	import utils.InsertColorTrans;
+	import utils.RemoveColorTrans;
+	
+	/**
+	 * ...
+	 * @author ...
+	 */
+	public class PopMenuConfigGrupo extends ConstructAlpha 
+	{
+		public var popMenu:MovieClip;
+		
+		public function PopMenuConfigGrupo() 
+		{
+			this.addEventListener(Event.ADDED_TO_STAGE, init);
+		}
+		
+		private function init(e:Event):void 
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+			
+			this.popMenu.btVoltaGrupo.buttonMode = true;
+			this.popMenu.btVoltaGrupo.addEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaGrupo);
+			this.popMenu.btVoltaGrupo.addEventListener(MouseEvent.MOUSE_UP, handleUpVoltaGrupo);
+			
+			this.popMenu.btEncerrarAula.buttonMode = true;
+			this.popMenu.btEncerrarAula.addEventListener(MouseEvent.MOUSE_DOWN, handleDownEncerraAula);
+			this.popMenu.btEncerrarAula.addEventListener(MouseEvent.MOUSE_UP, handleUpEncerraAula);
+			
+			this.popMenu.btLogoffAula.buttonMode = true;
+			this.popMenu.btLogoffAula.addEventListener(MouseEvent.MOUSE_DOWN, handleDownLogoffAula);
+			this.popMenu.btLogoffAula.addEventListener(MouseEvent.MOUSE_UP, handleUpLogoffAula);
+		}
+		
+		private function clean()
+		{
+			this.popMenu.btVoltaGrupo.buttonMode = false;
+			this.popMenu.btVoltaGrupo.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownVoltaGrupo);
+			this.popMenu.btVoltaGrupo.removeEventListener(MouseEvent.MOUSE_UP, handleUpVoltaGrupo);
+			
+			this.popMenu.btEncerrarAula.buttonMode = false;
+			this.popMenu.btEncerrarAula.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownEncerraAula);
+			this.popMenu.btEncerrarAula.removeEventListener(MouseEvent.MOUSE_UP, handleUpEncerraAula);
+			
+			this.popMenu.btLogoffAula.buttonMode = false;
+			this.popMenu.btLogoffAula.removeEventListener(MouseEvent.MOUSE_DOWN, handleDownLogoffAula);
+			this.popMenu.btLogoffAula.removeEventListener(MouseEvent.MOUSE_UP, handleUpLogoffAula);
+			
+		}
+		
+		//Listener
+		private function handleDownVoltaGrupo(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownEncerraAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleDownLogoffAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = .6;
+		}
+		
+		private function handleUpVoltaGrupo(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			PopConfigGrupo.instance.removePopMenu();
+		}
+		
+		private function handleUpEncerraAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			PopConfigGrupo.instance.logoffMembros();
+			PopConfigGrupo.instance.removePopMenu();
+			Global.arrNomeParticiantes = ["", "", "", "", "", ""];
+		}
+		
+		private function handleUpLogoffAula(e:MouseEvent):void 
+		{
+			e.currentTarget.alpha = 1;
+			this.clean();
+			//TODO:SERVICO
+			PopConfigGrupo.instance.insertPopLogoffEscola();
+		}
+
+	}
+
+}
