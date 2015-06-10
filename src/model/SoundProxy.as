@@ -35,7 +35,7 @@
 			
 			var loader : URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, loaderComplete);			
-			loader.load(new URLRequest( url/*"xml/sounds.xml"*/));
+			loader.load(new URLRequest( url));
 			
 			
 		}

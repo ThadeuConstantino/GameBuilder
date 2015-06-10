@@ -13,6 +13,18 @@
 		
 		public static var noLinkage:* = null;
 		
+		public static var urlInfo:String = "";
+		
+		public static var timelineAssistente:Array = ["McFaixaEtaria",
+													  "McGenero",
+													  "McExperiencia",
+													  "McPerfil",
+													  "McObjetivo",
+													  "McDuracao",
+													  "McEstilo",
+													  "McDesafios",
+													  "McTipo"];
+		
 	}
 
 }

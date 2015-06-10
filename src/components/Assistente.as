@@ -1,4 +1,5 @@
-﻿package components{
+﻿package components
+{
 	import com.greensock.TweenNano;
 	
 	import flash.display.Loader;
@@ -7,10 +8,9 @@
 	import flash.utils.getDefinitionByName;
 	
 	import events.AssistenteEvent;
-	import events.MainEvent;
 	
 	import model.Global;
-
+	
 	
 	/**
 	 * ...
@@ -21,72 +21,116 @@
 		private var ld:Loader;
 		public var bgMarca:MovieClip;
 		public var mcTopBar:MovieClip;
+		public var mcTimeline:Timeline;
 		
 		public var mcHolder:MovieClip;
 		public var loadingFiles:MovieClip;
 		
 		public var objSwf:*;
 		
+		//Qual o arquivo estou atualmente na tela de Assistente
+		public var intEtapaAtual:int = 0;
+		
 		//pattern Singleton
 		private static var _instance:Assistente;
 		public static function get instance():Assistente { return _instance };
 		//
 		
-		public function Assistente() 
+		public function Assistente():void
 		{
-			Global.noLinkage = this;
+			if (Global.noLinkage == null) _instance = Global.noLinkage = this;
 			this.addEventListener(Event.ADDED_TO_STAGE, init);
 		}
-			
+		/**
+		 * 
+		 * @param e
+		 * 
+		 */		
 		private function init(e:Event):void 
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
 			this.addEventListener(AssistenteEvent.ADD_COMPONENT, addComponent);
 			this.addEventListener(AssistenteEvent.REMOVE_COMPONENT, removeComponent);
+			
+			this.addEventListener(AssistenteEvent.AVANCA_TIMELINE_ASS, avantaTimelineAss);
+			
+			//Timeline Assistentes
+			this.dispatchEvent(new AssistenteEvent(AssistenteEvent.ADD_COMPONENT, Global.timelineAssistente[this.intEtapaAtual]));
 		}
 		
-		//Faz a inserção de telas no simulador
+		/**
+		 * 
+		 * @param e
+		 * @return 
+		 * 
+		 */		
+		private function avantaTimelineAss(e:AssistenteEvent)
+		{
+			this.intEtapaAtual = this.intEtapaAtual + 1;
+			
+			this.dispatchEvent(new AssistenteEvent(AssistenteEvent.REMOVE_COMPONENT, Global.timelineAssistente[this.intEtapaAtual]));
+		}
+		
+		/**
+		 * 
+		 * @param _ld
+		 * 
+		 */		
 		public function insertChildHolder(_ld:Loader):void
 		{			
 			this.addChild(_ld);
 		}
 		
-		private function addComponent(event:MainEvent):void 
+		/**
+		 * 
+		 * @param event
+		 * 
+		 */		
+		private function addComponent(event:AssistenteEvent):void 
 		{
-			var ClassReference:Class = getDefinitionByName("Mc" + event.strUrlAdd) as Class;
+			var ClassReference:Class = getDefinitionByName(event.strUrlAdd) as Class;
 			this.objSwf = new ClassReference();
-			this.objSwf.alpha = 0;
+			this.objSwf.x += stage.width;
 			
 			this.mcHolder.addChild(this.objSwf);
-
-			TweenNano.to(this.objSwf, .5, { alpha:1 } );
-		}	
-		
-		
-		private function removeComponent(event:AssistenteEvent):void 
-		{	
-			if (event.strUrlAdd != "") {
-				TweenNano.to(this.objSwf, .5, { alpha:0, onComplete:tweenUnLoadComplete, onCompleteParams:[event] } );
-			}else {
-				TweenNano.to(this.objSwf, .5, { alpha:0, onComplete:tweenUnLoadComplete, onCompleteParams:[event] } );
-			}
 			
+			TweenNano.to(this.objSwf, .5, { x:0 } );
 		}
 		
+		/**
+		 * 
+		 * @param event
+		 * 
+		 */		
+		private function removeComponent(event:AssistenteEvent):void 
+		{	
+			var fileAntigo:* = this.objSwf;
+			TweenNano.to(this.objSwf, .5, { x:-stage.width, onComplete:removeFileAntigo, onCompleteParams:[fileAntigo]});
+			
+			this.tweenUnLoadComplete(event);
+		}
+		
+		private function removeFileAntigo(fileAntigo:*)
+		{
+			this.mcHolder.removeChild(fileAntigo);
+			fileAntigo = null;
+		}
+		/**
+		 * 
+		 * @param event
+		 * 
+		 */		
 		private function tweenUnLoadComplete(event:AssistenteEvent):void 
 		{	
-			this.mcHolder.removeChild(this.objSwf);
-			this.objSwf = null;
-			
 			if (event.strUrlAdd != "") 
 			{	
-				this.dispatchEvent(new AssistenteEvent(AssistenteEvent.ADD_COMPONENT, event.strUrlAdd, "", true));
+				this.dispatchEvent(new AssistenteEvent(AssistenteEvent.ADD_COMPONENT, event.strUrlAdd, ""));
 			}else {
 				this.dispatchEvent(new AssistenteEvent(AssistenteEvent.REMOVE_COMPLETED, "", event.strUrlRemove));
 			}
 			
 		}
 	}
-
+	
 }

@@ -3,13 +3,13 @@
 	import flash.display.MovieClip;
 	import flash.events.Event;
 	
-	import control.LoadComponent;
-	
 	import events.MainEvent;
 	import events.SoundEvent;
 	
 	import model.Global;
-	import model.SoundProxy;
+	
+	import utils.LoadComponent;
+	import utils.URLAbsoluto;
 	
 	/**
 	 * ...
@@ -27,7 +27,7 @@
 		public var objSwf;
 		
 		//Sounds
-		private var sons:SoundProxy;
+		//private var sons:SoundProxy;
 		
 		//pattern Singleton
 		private static var _instance:Main;
@@ -41,17 +41,24 @@
 			this.addEventListener(Event.ADDED_TO_STAGE, init);
 		}
 			
+		/**
+		 * 
+		 * @param e
+		 * 
+		 */
 		private function disparaSom(e:SoundEvent):void 
 		{
-			this.sons.play(e.id, e.preventConcurrentSounds, e.times );
+			//this.sons.play(e.id, e.preventConcurrentSounds, e.times );
 		}
 		
 		private function init(e:Event):void 
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
-			this.sons = new SoundProxy( "sounds.xml" );
-			this.addEventListener(SoundEvent.DISPARA_SOM, disparaSom);
+			Global.urlInfo = URLAbsoluto(loaderInfo) + "/bin";
+			
+			//this.sons = new SoundProxy( Global.urlInfo + "xml/sounds.xml" );
+			//this.addEventListener(SoundEvent.DISPARA_SOM, disparaSom);
 			
 			//Loading SWFs externos
 			this.loadingFiles = new LoadComponent();
@@ -59,6 +66,17 @@
 			
 			//Inicia Assistente
 			this.loadingFiles.dispatchEvent(new MainEvent(MainEvent.ADD_COMPONENT, "Assistente"));
+		}
+		
+		/**
+		 * 
+		 * @param _ld
+		 * 
+		 */
+		//Faz a inserção de telas no Root no Simulador
+		public function insertChildHolder(_ld:Loader):void
+		{			
+			this.mcHolder.addChild(_ld);
 		}
 		
 		
