@@ -1,8 +1,6 @@
 ﻿package components
 {
-	import flash.display.MovieClip;
 	import flash.events.Event;
-	import flash.events.MouseEvent;
 	
 	import utils.HudButtons;
 
@@ -11,7 +9,7 @@
 	 * ...
 	 * @author ...
 	 */
-	public class Tipos extends MovieClip 
+	public class Tipos extends QuizSimples 
 	{
 		public var btContinuar:HudButtons;
 		
@@ -30,17 +28,7 @@
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
-			this.btContinuar.enabledBt(true);
-			this.btContinuar.addEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
-		}
-		
-		private function handleUpContinuar(e:MouseEvent)
-		{
-			this.btContinuar.enabledBt(false);
-			this.btContinuar.removeEventListener(MouseEvent.MOUSE_UP, handleUpContinuar);
-			
-			//Timeline Assistentes
-			//this.dispatchEvent(new AssistenteEvent(AssistenteEvent.AVANCA_TIMELINE_ASS));
+			this.initBt(this.btContinuar);
 		}
 		
 	}

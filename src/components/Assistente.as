@@ -38,7 +38,11 @@
 		
 		public function Assistente():void
 		{
-			if (Global.noLinkage == null) _instance = Global.noLinkage = this;
+			if (Global.noLinkage == null) {
+				_instance = Global.noLinkage = this;
+			}else{
+				_instance = this;
+			}
 			this.addEventListener(Event.ADDED_TO_STAGE, init);
 		}
 		/**
@@ -57,6 +61,7 @@
 			
 			//Timeline Assistentes
 			this.dispatchEvent(new AssistenteEvent(AssistenteEvent.ADD_COMPONENT, Global.timelineAssistente[this.intEtapaAtual]));
+			this.mcTimeline.setStatusBtTimeline(this.intEtapaAtual+1);
 		}
 		
 		/**
@@ -69,7 +74,29 @@
 		{
 			this.intEtapaAtual = this.intEtapaAtual + 1;
 			
-			this.dispatchEvent(new AssistenteEvent(AssistenteEvent.REMOVE_COMPONENT, Global.timelineAssistente[this.intEtapaAtual]));
+			this.removeTelaAtual();
+		}
+		
+		//Remove a tela atual e atualizo a TIMELINE
+		public function removeTelaAtual():void
+		{
+			this.mcTimeline.setStatusBtTimeline(this.intEtapaAtual+1);
+			
+			if(this.intEtapaAtual < Global.timelineAssistente.length)
+			{
+				this.dispatchEvent(new AssistenteEvent(AssistenteEvent.REMOVE_COMPONENT, Global.timelineAssistente[this.intEtapaAtual]));
+			}
+		}
+		
+		//SETTER
+		public function set valorEtapaAtual(valor:int):void
+		{
+			this.intEtapaAtual = valor;
+		}
+		
+		public function get valorEtapaAtual():int
+		{
+			return this.intEtapaAtual;
 		}
 		
 		/**

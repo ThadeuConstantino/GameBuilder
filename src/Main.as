@@ -18,7 +18,7 @@
 	public class Main extends MovieClip 
 	{
 		private var ld:Loader;
-		public var bgMarca:MovieClip;
+		public var bg:MovieClip;
 		public var mcTopBar:MovieClip;
 		
 		public var mcHolder:MovieClip;
@@ -55,6 +55,8 @@
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			
+			this.bg.visible = false;
+			
 			Global.urlInfo = URLAbsoluto(loaderInfo) + "/bin";
 			
 			//this.sons = new SoundProxy( Global.urlInfo + "xml/sounds.xml" );
@@ -65,7 +67,7 @@
 			this.addChild(this.loadingFiles);
 			
 			//Inicia Assistente
-			this.loadingFiles.dispatchEvent(new MainEvent(MainEvent.ADD_COMPONENT, "Assistente"));
+			this.loadingFiles.dispatchEvent(new MainEvent(MainEvent.ADD_COMPONENT, "Logo"));
 		}
 		
 		/**
@@ -73,9 +75,10 @@
 		 * @param _ld
 		 * 
 		 */
+		
 		//Faz a inserção de telas no Root no Simulador
 		public function insertChildHolder(_ld:Loader):void
-		{			
+		{		
 			this.mcHolder.addChild(_ld);
 		}
 		

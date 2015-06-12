@@ -14,7 +14,7 @@
 	 */
 	public class HudButtons extends MovieClip
 	{
-		public var idNum:int = 0;
+		public var _idNum:int = 0;
 		private var posX:Number;
 		private var posY:Number;
 		
@@ -107,6 +107,10 @@
 			
 			this.gotoAndStop(1);
 		}
+		
+		//Getter Setter
+		public function set idNum(value:int):void { this._idNum = value; } 
+		public function get idNum():int { return this._idNum; } 
 		
 	}
 

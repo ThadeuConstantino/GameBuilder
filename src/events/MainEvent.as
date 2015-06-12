@@ -15,7 +15,7 @@
 		public function MainEvent(type:String="", urlAdd:String = "", urlRemove:String = "", transicao:Boolean = false) 
 		{
 			super(type, true, false);
-			trace("asfsadfasdf")
+		
 			//public vars
 			this.strUrlAdd = urlAdd;
 			this.strUrlRemove = urlRemove;

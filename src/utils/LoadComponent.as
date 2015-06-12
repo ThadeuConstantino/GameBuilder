@@ -1,4 +1,6 @@
 ﻿package utils{
+	import com.greensock.TweenNano;
+	
 	import flash.display.Loader;
 	import flash.display.MovieClip;
 	import flash.events.Event;
@@ -6,8 +8,9 @@
 	import flash.events.ProgressEvent;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestHeader;
-	import com.greensock.TweenNano;
+	
 	import events.MainEvent;
+	
 	import model.Global;
 	
 	/**
@@ -162,9 +165,13 @@
 			//Global.noLinkage.mcLoad.visible = false;
 			
 			Main.instance.insertChildHolder(this.ld);
-			TweenNano.to(this.ld, LoadComponent.TIME, { alpha:1 } );
+			TweenNano.to(this.ld, LoadComponent.TIME, { alpha:1, onComplete:tweenCompleteAlpha } );
 		}
 		
+		private function tweenCompleteAlpha()
+		{
+			if(this.strNome == "Logo") Global.noLinkage.bg.visible = true;
+		}
 		/**
 		 * Inativo
 		 * 
